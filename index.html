@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Document Analysis | Consello</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Presentation Mode Overlay -->
+    <div id="presentationOverlay" class="presentation-overlay hidden">
+        <button class="exit-presentation" onclick="togglePresentationMode()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Exit Fullscreen
+        </button>
+    </div>
+
+    <header class="header">
+        <div class="logo">
+            <div class="logo-box"></div>
+            <span class="logo-text">CONSELLO</span>
+        </div>
+        <nav class="nav">
+            <button class="nav-btn active" data-view="analyze">Analyze</button>
+            <button class="nav-btn" data-view="templates">Templates</button>
+        </nav>
+        <div class="header-actions">
+            <button class="btn btn-icon" onclick="togglePresentationMode()" title="Presentation Mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Legal Document Analysis</h1>
+            <p class="subtitle">AI-powered NDA triage and contract review</p>
+        </section>
+
+        <!-- Main App Container -->
+        <div class="app-container">
+            <!-- Left Panel: Document Input -->
+            <div class="panel panel-input">
+                <div class="panel-header">
+                    <h2>Document</h2>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm btn-ghost" onclick="loadSampleNDA('standard')">Standard NDA</button>
+                        <button class="btn btn-sm btn-ghost" onclick="loadSampleNDA('problematic')">Problem NDA</button>
+                    </div>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <path d="M24 4L24 32M24 4L16 12M24 4L32 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M8 28V40C8 41.1 8.9 42 10 42H38C39.1 42 40 41.1 40 40V28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Drop document here or click to upload</p>
+                    <span class="file-types">PDF, DOCX, TXT</span>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" hidden>
+                </div>
+
+                <div class="document-preview hidden" id="documentPreview">
+                    <div class="document-header">
+                        <div class="document-info">
+                            <span class="document-icon">📄</span>
+                            <div>
+                                <span class="document-name" id="documentName"></span>
+                                <span class="document-meta" id="documentMeta"></span>
+                            </div>
+                        </div>
+                        <button class="btn-icon-small" onclick="clearDocument()" title="Remove">✕</button>
+                    </div>
+                    <div class="document-content" id="documentContent"></div>
+                </div>
+
+                <div class="analysis-type-selector" id="analysisSelector">
+                    <h3>Analysis Type</h3>
+                    <div class="type-options">
+                        <label class="type-option selected" data-type="nda-triage">
+                            <input type="radio" name="analysisType" value="nda-triage" checked>
+                            <div class="type-icon green">⚡</div>
+                            <div class="type-info">
+                                <span class="type-name">NDA Triage</span>
+                                <span class="type-desc">Fast screening</span>
+                            </div>
+                        </label>
+                        <label class="type-option" data-type="contract-review">
+                            <input type="radio" name="analysisType" value="contract-review">
+                            <div class="type-icon blue">📋</div>
+                            <div class="type-info">
+                                <span class="type-name">Contract Review</span>
+                                <span class="type-desc">Deep analysis</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large btn-analyze" id="analyzeBtn" onclick="runAnalysis()">
+                    <span class="btn-text">Analyze Document</span>
+                    <span class="btn-loading hidden">
+                        <span class="spinner"></span>
+                        Analyzing...
+                    </span>
+                </button>
+
+                <p class="input-hint">Or paste results manually below</p>
+                <textarea class="paste-input" id="pasteArea" placeholder="Paste Claude analysis results here..."></textarea>
+                <button class="btn btn-secondary btn-sm" onclick="parseManualResults()" style="margin-top: 0.5rem;">Parse Results</button>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="panel panel-results">
+                <div class="panel-header">
+                    <h2>Analysis Results</h2>
+                    <div class="panel-actions hidden" id="resultActions">
+                        <button class="btn btn-sm btn-ghost" onclick="copyResults()">Copy</button>
+                        <button class="btn btn-sm btn-primary" onclick="exportReport()">Export</button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="32" r="28" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="4 4"/>
+                            <path d="M24 32h16M32 24v16" stroke="#BDBDBD" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>No Analysis Yet</h3>
+                    <p>Upload a document or try a demo</p>
+                    <div class="demo-buttons">
+                        <button class="demo-btn green" onclick="runDemoAnalysis('green')">
+                            <span class="demo-indicator"></span>
+                            GREEN Demo
+                        </button>
+                        <button class="demo-btn yellow" onclick="runDemoAnalysis('yellow')">
+                            <span class="demo-indicator"></span>
+                            YELLOW Demo
+                        </button>
+                        <button class="demo-btn red" onclick="runDemoAnalysis('red')">
+                            <span class="demo-indicator"></span>
+                            RED Demo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Display -->
+                <div class="results-display hidden" id="resultsDisplay">
+                    <!-- Classification Hero -->
+                    <div class="classification-hero" id="classificationHero">
+                        <div class="classification-badge" id="classificationBadge">
+                            <span class="badge-icon"></span>
+                            <div class="badge-content">
+                                <span class="badge-level"></span>
+                                <span class="badge-text"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Info -->
+                    <div class="result-meta" id="resultMeta">
+                        <div class="meta-item">
+                            <span class="meta-label">Document</span>
+                            <span class="meta-value" id="metaDocument">—</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Parties</span>
+                            <span class="meta-value" id="metaParties">—</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Type</span>
+                            <span class="meta-value" id="metaType">—</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Term</span>
+                            <span class="meta-value" id="metaTerm">—</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Governing Law</span>
+                            <span class="meta-value" id="metaLaw">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Screening Results -->
+                    <div class="result-section" id="screeningSection">
+                        <div class="section-header" onclick="toggleSection('screening')">
+                            <h3>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                </svg>
+                                Screening Results
+                            </h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-content expanded" id="screeningContent">
+                            <div class="screening-grid" id="screeningGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Issues Found -->
+                    <div class="result-section" id="issuesSection">
+                        <div class="section-header" onclick="toggleSection('issues')">
+                            <h3>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                Issues Found
+                                <span class="issue-count" id="issueCount">0</span>
+                            </h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-content expanded" id="issuesContent"></div>
+                    </div>
+
+                    <!-- Recommendation -->
+                    <div class="result-section" id="recommendationSection">
+                        <div class="section-header" onclick="toggleSection('recommendation')">
+                            <h3>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                Recommendation
+                            </h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-content expanded" id="recommendationContent"></div>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div class="result-section" id="nextStepsSection">
+                        <div class="section-header" onclick="toggleSection('nextSteps')">
+                            <h3>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                    <polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                                Next Steps
+                            </h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-content expanded" id="nextStepsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="disclaimer">This tool assists with legal workflows but does not provide legal advice. All analysis should be reviewed by qualified legal professionals.</p>
+        </div>
+        <div class="footer-brand">© 2026 Consello</div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

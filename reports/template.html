@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Analysis Report | Consello</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --consello-black: #000000;
+            --consello-white: #FFFFFF;
+            --consello-terracotta: #A64A30;
+            --consello-apricot: #F6D1A3;
+            --color-green: #2E7D32;
+            --color-green-bg: #E8F5E9;
+            --color-yellow: #F9A825;
+            --color-yellow-bg: #FFF8E1;
+            --color-red: #C62828;
+            --color-red-bg: #FFEBEE;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', Arial, sans-serif;
+            color: var(--consello-black);
+            background: var(--consello-white);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--consello-black);
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background: var(--consello-black);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .header-info {
+            text-align: right;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .header-info .date {
+            font-weight: 500;
+            color: var(--consello-black);
+        }
+
+        /* Title Section */
+        .title-section {
+            margin-bottom: 2rem;
+        }
+
+        .title-section h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .document-name {
+            font-size: 1.125rem;
+            color: #666;
+        }
+
+        /* Classification Badge */
+        .classification {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        .classification.green {
+            background: var(--color-green-bg);
+            color: var(--color-green);
+        }
+
+        .classification.yellow {
+            background: var(--color-yellow-bg);
+            color: var(--color-yellow);
+        }
+
+        .classification.red {
+            background: var(--color-red-bg);
+            color: var(--color-red);
+        }
+
+        .classification-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: #FAFAFA;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .summary-box h2 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .summary-value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--consello-black);
+        }
+
+        .section h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section p {
+            margin-bottom: 0.75rem;
+        }
+
+        /* Issue Cards */
+        .issue-card {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .issue-card.green {
+            background: var(--color-green-bg);
+            border-color: var(--color-green);
+        }
+
+        .issue-card.yellow {
+            background: var(--color-yellow-bg);
+            border-color: var(--color-yellow);
+        }
+
+        .issue-card.red {
+            background: var(--color-red-bg);
+            border-color: var(--color-red);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-title {
+            font-weight: 700;
+        }
+
+        .issue-severity {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .issue-severity.green { background: var(--color-green); color: white; }
+        .issue-severity.yellow { background: var(--color-yellow); color: white; }
+        .issue-severity.red { background: var(--color-red); color: white; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            border: 1px solid #E0E0E0;
+            text-align: left;
+        }
+
+        th {
+            background: #F5F5F5;
+            font-weight: 500;
+        }
+
+        /* Redline Box */
+        .redline-box {
+            background: #FFF8E1;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .redline-box .current {
+            text-decoration: line-through;
+            color: var(--color-red);
+        }
+
+        .redline-box .suggested {
+            color: var(--color-green);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #E0E0E0;
+            text-align: center;
+        }
+
+        .footer-disclaimer {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #FAFAFA;
+            border-radius: 4px;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            color: var(--consello-black);
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                font-size: 11pt;
+            }
+
+            .page {
+                max-width: none;
+                padding: 0;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .issue-card {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-box"></div>
+                <span class="logo-text">CONSELLO</span>
+            </div>
+            <div class="header-info">
+                <div class="date">{{DATE}}</div>
+                <div>Legal Analysis Report</div>
+                <div>CONFIDENTIAL</div>
+            </div>
+        </header>
+
+        <div class="title-section">
+            <h1>{{REPORT_TITLE}}</h1>
+            <p class="document-name">Document: {{DOCUMENT_NAME}}</p>
+        </div>
+
+        <div class="classification {{CLASSIFICATION_CLASS}}">
+            <span class="classification-icon">{{CLASSIFICATION_ICON}}</span>
+            <span>{{CLASSIFICATION_TEXT}}</span>
+        </div>
+
+        <div class="summary-box">
+            <h2>Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Parties</span>
+                    <span class="summary-value">{{PARTIES}}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Document Type</span>
+                    <span class="summary-value">{{DOCUMENT_TYPE}}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Your Role</span>
+                    <span class="summary-value">{{YOUR_ROLE}}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Review Basis</span>
+                    <span class="summary-value">{{REVIEW_BASIS}}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Key Findings</h2>
+            <!-- Key findings content here -->
+            {{KEY_FINDINGS}}
+        </div>
+
+        <div class="section">
+            <h2>Screening Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Criterion</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{SCREENING_RESULTS}}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Issues Found</h2>
+            {{ISSUES}}
+        </div>
+
+        <div class="section">
+            <h2>Recommendation</h2>
+            {{RECOMMENDATION}}
+        </div>
+
+        <div class="section">
+            <h2>Next Steps</h2>
+            {{NEXT_STEPS}}
+        </div>
+
+        <footer class="footer">
+            <div class="footer-disclaimer">
+                <strong>Important Notice:</strong> This report was generated by AI to assist with legal workflows. It does not constitute legal advice. All analysis should be reviewed by qualified legal professionals before being relied upon for legal decisions.
+            </div>
+            <p class="footer-brand">© {{YEAR}} Consello</p>
+        </footer>
+    </div>
+</body>
+</html>

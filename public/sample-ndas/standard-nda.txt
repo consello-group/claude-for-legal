@@ -1,0 +1,94 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of [DATE] ("Effective Date") by and between:
+
+Consello Group LLC, a Delaware limited liability company ("Consello"), and
+
+[COMPANY NAME], a [STATE] [ENTITY TYPE] ("Company")
+
+(each a "Party" and collectively, the "Parties").
+
+WHEREAS, the Parties wish to explore a potential business relationship (the "Purpose") and, in connection therewith, each Party may disclose to the other certain confidential and proprietary information.
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements herein, the Parties agree as follows:
+
+1. DEFINITION OF CONFIDENTIAL INFORMATION
+
+"Confidential Information" means any non-public information disclosed by one Party (the "Disclosing Party") to the other Party (the "Receiving Party"), whether orally, in writing, or by any other means, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and circumstances of disclosure. Confidential Information includes, but is not limited to, trade secrets, business plans, financial information, customer lists, technical data, product designs, and marketing strategies.
+
+2. EXCLUSIONS
+
+Confidential Information does not include information that:
+
+(a) is or becomes publicly available through no fault or breach by the Receiving Party;
+
+(b) was rightfully in the Receiving Party's possession before receipt from the Disclosing Party, as evidenced by written records;
+
+(c) is independently developed by the Receiving Party without use of or reference to the Disclosing Party's Confidential Information, as evidenced by written records;
+
+(d) is rightfully obtained by the Receiving Party from a third party without restriction on use or disclosure; or
+
+(e) is required to be disclosed by law, regulation, or court order, provided that the Receiving Party gives the Disclosing Party prompt written notice of such requirement (to the extent legally permitted) and cooperates with any efforts to obtain a protective order.
+
+3. OBLIGATIONS OF RECEIVING PARTY
+
+The Receiving Party agrees to:
+
+(a) use the Confidential Information solely for the Purpose;
+
+(b) protect the Confidential Information using the same degree of care it uses to protect its own confidential information, but in no event less than reasonable care;
+
+(c) not disclose the Confidential Information to any third party except as expressly permitted herein;
+
+(d) limit access to Confidential Information to its employees, contractors, and professional advisors who have a need to know for the Purpose and who are bound by confidentiality obligations no less protective than those in this Agreement.
+
+4. PERMITTED DISCLOSURES
+
+Either Party may disclose the other Party's Confidential Information to its affiliates, employees, contractors, and professional advisors who have a need to know for the Purpose, provided that such persons are bound by written confidentiality obligations substantially similar to those set forth herein.
+
+5. TERM
+
+This Agreement shall commence on the Effective Date and continue for two (2) years, unless earlier terminated by either Party upon thirty (30) days' written notice. The obligations of confidentiality shall survive termination of this Agreement for a period of three (3) years from the date of disclosure of any Confidential Information.
+
+6. RETURN OF MATERIALS
+
+Upon termination of this Agreement or upon the Disclosing Party's request, the Receiving Party shall promptly return or destroy all Confidential Information and any copies thereof. Notwithstanding the foregoing, the Receiving Party may retain one copy of the Confidential Information in its legal files solely for the purpose of determining its obligations under this Agreement and may retain copies stored on routine backup systems, provided that such retained copies remain subject to the confidentiality obligations herein.
+
+7. NO WARRANTY
+
+ALL CONFIDENTIAL INFORMATION IS PROVIDED "AS IS." NEITHER PARTY MAKES ANY WARRANTIES, EXPRESS OR IMPLIED, REGARDING THE ACCURACY, COMPLETENESS, OR PERFORMANCE OF ANY CONFIDENTIAL INFORMATION.
+
+8. NO LICENSE
+
+Nothing in this Agreement grants any rights or licenses to any patents, copyrights, trade secrets, or other intellectual property rights. No license is granted by implication, estoppel, or otherwise.
+
+9. REMEDIES
+
+The Parties acknowledge that monetary damages may be inadequate to protect against any breach of this Agreement. Accordingly, either Party shall be entitled to seek equitable relief, including injunction and specific performance, in addition to all other remedies available at law or in equity.
+
+10. GOVERNING LAW AND JURISDICTION
+
+This Agreement shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of laws principles. Any dispute arising out of or relating to this Agreement shall be subject to the exclusive jurisdiction of the state and federal courts located in New York County, New York.
+
+11. MISCELLANEOUS
+
+(a) Entire Agreement: This Agreement constitutes the entire agreement between the Parties concerning the subject matter hereof and supersedes all prior agreements and understandings.
+
+(b) Amendment: This Agreement may not be amended except by a written instrument signed by both Parties.
+
+(c) Waiver: No waiver of any provision of this Agreement shall be effective unless in writing and signed by the waiving Party.
+
+(d) Severability: If any provision of this Agreement is held invalid or unenforceable, the remaining provisions shall continue in full force and effect.
+
+(e) Assignment: Neither Party may assign this Agreement without the prior written consent of the other Party, except that either Party may assign this Agreement to an affiliate or in connection with a merger, acquisition, or sale of substantially all of its assets.
+
+(f) Counterparts: This Agreement may be executed in counterparts, each of which shall be deemed an original.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the Effective Date.
+
+CONSELLO GROUP LLC                    [COMPANY NAME]
+
+By: _________________________         By: _________________________
+Name:                                 Name:
+Title:                                Title:
+Date:                                 Date:

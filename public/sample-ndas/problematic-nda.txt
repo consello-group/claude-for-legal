@@ -1,0 +1,142 @@
+CONFIDENTIALITY AND NON-DISCLOSURE AGREEMENT
+
+This Confidentiality and Non-Disclosure Agreement ("Agreement") is made effective as of [DATE] by and between:
+
+ACME TECHNOLOGIES INC., a California corporation ("Disclosing Party"), and
+
+[RECIPIENT NAME/COMPANY], ("Receiving Party").
+
+RECITALS
+
+WHEREAS, Disclosing Party possesses certain confidential and proprietary information relating to its business, products, and technologies; and
+
+WHEREAS, Receiving Party desires to receive certain of this information for the purpose of evaluating a potential business relationship;
+
+NOW, THEREFORE, in consideration of the disclosure of Confidential Information, Receiving Party agrees as follows:
+
+1. DEFINITION OF CONFIDENTIAL INFORMATION
+
+1.1 "Confidential Information" means all information of any kind, whether written, oral, electronic, visual, or in any other form, that is disclosed by or on behalf of Disclosing Party to Receiving Party, whether or not marked as confidential. This includes, without limitation:
+
+(a) All technical data, trade secrets, know-how, research, product plans, products, services, software, developments, inventions, processes, designs, drawings, engineering, marketing, finances, business plans, customer information, and other business information;
+
+(b) All information learned or obtained by Receiving Party through observation or examination of Disclosing Party's premises, equipment, or materials;
+
+(c) All verbal disclosures, regardless of whether subsequently confirmed in writing;
+
+(d) Any information that could be valuable to Disclosing Party or its competitors.
+
+2. EXCLUSIONS
+
+Information shall not be deemed Confidential Information only if Receiving Party can demonstrate by clear and convincing documentary evidence that:
+
+(a) The information was publicly known at the time of disclosure through no wrongful act of any party; or
+
+(b) The information was in Receiving Party's possession at the time of disclosure, as shown by written records dated prior to such disclosure.
+
+3. OBLIGATIONS OF RECEIVING PARTY
+
+3.1 Non-Disclosure. Receiving Party agrees to hold all Confidential Information in strict confidence and not to disclose any Confidential Information to any person or entity whatsoever, except with the prior written consent of Disclosing Party.
+
+3.2 Non-Use. Receiving Party agrees not to use any Confidential Information for any purpose other than the evaluation of a potential business relationship with Disclosing Party.
+
+3.3 Standard of Care. Receiving Party shall protect the Confidential Information using the highest degree of care and security measures, including encryption of all electronic communications and storage of all physical materials in locked facilities with restricted access.
+
+3.4 No Copies. Receiving Party shall not make any copies of Confidential Information without the prior written consent of Disclosing Party.
+
+3.5 Return of Materials. Upon request by Disclosing Party, or upon termination of discussions between the parties, Receiving Party shall immediately return all Confidential Information and all copies thereof to Disclosing Party, and shall certify in a sworn affidavit that all Confidential Information has been returned or destroyed.
+
+4. NON-SOLICITATION OF EMPLOYEES
+
+4.1 For a period of three (3) years following the date of this Agreement, Receiving Party agrees not to, directly or indirectly, solicit, recruit, hire, or attempt to hire any employee, consultant, or contractor of Disclosing Party, or induce any such person to leave the employment or service of Disclosing Party.
+
+4.2 This restriction shall apply to any person who was an employee, consultant, or contractor of Disclosing Party at any time during the term of this Agreement or during the twelve (12) months preceding the date of this Agreement.
+
+5. NON-COMPETE
+
+5.1 During the term of this Agreement and for a period of two (2) years thereafter, Receiving Party agrees not to engage, directly or indirectly, in any business activity that competes with the business of Disclosing Party.
+
+5.2 This includes, without limitation, developing, marketing, selling, or distributing any products or services that are similar to or competitive with those of Disclosing Party.
+
+6. EXCLUSIVITY
+
+6.1 During the term of this Agreement, Receiving Party agrees not to enter into any discussions, negotiations, or agreements with any third party regarding any matter that relates to or could affect the potential business relationship between the parties.
+
+6.2 Receiving Party shall not disclose to any third party the fact that discussions are taking place or the nature of such discussions.
+
+7. RESIDUALS
+
+7.1 Nothing in this Agreement shall restrict Receiving Party from using any general knowledge, skills, experience, ideas, concepts, or techniques that are retained in the unaided memories of Receiving Party's personnel who have had access to Confidential Information, provided that such use does not result in a disclosure of Confidential Information.
+
+7.2 Notwithstanding Section 7.1, this residuals provision shall not apply to any information that constitutes trade secrets, patentable inventions, or information that is subject to copyright protection.
+
+8. INTELLECTUAL PROPERTY ASSIGNMENT
+
+8.1 All ideas, concepts, inventions, discoveries, improvements, and developments (collectively, "Developments") conceived or developed by Receiving Party during the term of this Agreement that relate in any way to the Confidential Information or to the business of Disclosing Party shall be the sole and exclusive property of Disclosing Party.
+
+8.2 Receiving Party hereby assigns to Disclosing Party all right, title, and interest in and to any such Developments, and agrees to execute any documents necessary to perfect such assignment.
+
+9. AUDIT RIGHTS
+
+9.1 Disclosing Party shall have the right, upon reasonable notice, to audit Receiving Party's facilities, records, and systems to verify compliance with this Agreement.
+
+9.2 Such audits may be conducted at any time during normal business hours and shall include access to all relevant personnel, documents, and electronic systems.
+
+10. TERM
+
+10.1 This Agreement shall remain in effect indefinitely unless terminated by Disclosing Party.
+
+10.2 The confidentiality obligations set forth herein shall survive termination of this Agreement and shall continue in perpetuity.
+
+11. REMEDIES
+
+11.1 Receiving Party acknowledges that any breach of this Agreement will cause irreparable harm to Disclosing Party for which monetary damages would be inadequate.
+
+11.2 In the event of any breach or threatened breach of this Agreement, Disclosing Party shall be entitled, without proof of actual damages, to:
+(a) Injunctive relief;
+(b) Specific performance;
+(c) Liquidated damages in the amount of $500,000 per breach; and
+(d) Recovery of all attorneys' fees and costs.
+
+11.3 The foregoing remedies shall be cumulative and in addition to any other remedies available at law or in equity.
+
+12. GOVERNING LAW AND DISPUTE RESOLUTION
+
+12.1 This Agreement shall be governed by and construed in accordance with the laws of the State of Texas.
+
+12.2 Any dispute arising out of or relating to this Agreement shall be resolved exclusively by binding arbitration administered by the American Arbitration Association in accordance with its Commercial Arbitration Rules. The arbitration shall take place in Houston, Texas, and shall be conducted by a single arbitrator selected by Disclosing Party.
+
+12.3 The decision of the arbitrator shall be final and binding, and judgment upon the award may be entered in any court having jurisdiction.
+
+12.4 Receiving Party waives any right to a jury trial and any right to participate in a class action.
+
+13. GENERAL PROVISIONS
+
+13.1 Entire Agreement: This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements and understandings.
+
+13.2 Amendment: This Agreement may be amended only by a written instrument signed by Disclosing Party.
+
+13.3 Waiver: No failure by Disclosing Party to enforce any provision shall constitute a waiver of its rights.
+
+13.4 Assignment: Receiving Party may not assign this Agreement without the prior written consent of Disclosing Party.
+
+13.5 Severability: If any provision is held invalid, the remaining provisions shall remain in full force, and the invalid provision shall be modified to the minimum extent necessary to be valid while preserving Disclosing Party's interests.
+
+IN WITNESS WHEREOF, Receiving Party has executed this Agreement as of the date first written above.
+
+RECEIVING PARTY:
+
+By: _________________________
+Name:
+Title:
+Date:
+
+
+ACKNOWLEDGED BY DISCLOSING PARTY:
+
+ACME TECHNOLOGIES INC.
+
+By: _________________________
+Name:
+Title:
+Date:

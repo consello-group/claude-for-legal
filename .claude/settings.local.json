@@ -1,0 +1,13 @@
+{
+  "project": {
+    "name": "Consello Legal Document Analysis",
+    "description": "AI-powered contract review and NDA triage for Consello's legal team"
+  },
+  "skills": [
+    "consello-brand"
+  ],
+  "context": {
+    "playbook": "~/.claude/legal.local.md",
+    "brand": ".claude/skills/consello-brand.md"
+  }
+}
