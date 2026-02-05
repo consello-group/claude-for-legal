@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 // Demo data for instant demos without API
 const DEMO_DATA = {
@@ -467,6 +468,7 @@ export default function Home() {
           <button className="nav-btn active">Analyze</button>
         </nav>
         <div className="header-actions">
+          <Link href="/about" className="btn btn-ghost btn-sm">About</Link>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {

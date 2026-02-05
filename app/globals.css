@@ -1065,3 +1065,389 @@ body {
     font-size: 0.875rem;
     margin-top: -0.5rem;
 }
+
+/* ============================================
+   ABOUT PAGE STYLES
+   ============================================ */
+
+.about-main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.about-hero {
+    text-align: center;
+    padding: var(--space-xl) 0;
+    margin-bottom: var(--space-xl);
+}
+
+.about-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+}
+
+.about-subtitle {
+    font-size: 1.25rem;
+    color: #555;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Section Styles */
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--consello-terracotta);
+    margin-bottom: var(--space-xs);
+}
+
+.features-section,
+.how-it-works-section,
+.classification-section,
+.roadmap-section,
+.tech-section {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid #E8E8E8;
+}
+
+.features-section h2,
+.how-it-works-section h2,
+.classification-section h2,
+.roadmap-section h2,
+.tech-section h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+}
+
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+.feature-card {
+    background: var(--consello-white);
+    border: 1px solid #E8E8E8;
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    transition: box-shadow var(--transition-normal);
+}
+
+.feature-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-md);
+}
+
+.feature-icon.green {
+    background: var(--color-green-bg);
+    color: var(--color-green);
+}
+
+.feature-icon.blue {
+    background: var(--color-blue-bg);
+    color: var(--color-blue);
+}
+
+.feature-icon.dark {
+    background: #F0F0F0;
+    color: var(--consello-black);
+}
+
+.feature-icon.terracotta {
+    background: #FDF3EE;
+    color: var(--consello-terracotta);
+}
+
+.feature-card h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+.feature-card p {
+    color: #555;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-sm);
+}
+
+.feature-list {
+    list-style: none;
+    margin-top: var(--space-sm);
+}
+
+.feature-list li {
+    font-size: 0.875rem;
+    color: #666;
+    padding: 0.25rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+}
+
+.feature-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--consello-terracotta);
+}
+
+/* How It Works */
+.steps-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    padding: var(--space-md);
+}
+
+.step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--consello-black);
+    color: var(--consello-white);
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-sm);
+}
+
+.step h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.step p {
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+.step-arrow {
+    color: #CCC;
+    font-size: 1.5rem;
+    padding-top: var(--space-lg);
+}
+
+/* Classification Cards */
+.classification-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+.classification-card {
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    text-align: center;
+}
+
+.classification-card.green {
+    background: var(--color-green-bg);
+}
+
+.classification-card.yellow {
+    background: var(--color-yellow-bg);
+}
+
+.classification-card.red {
+    background: var(--color-red-bg);
+}
+
+.classification-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.classification-icon {
+    font-size: 1.5rem;
+}
+
+.classification-card.green .classification-icon,
+.classification-card.green h3 {
+    color: var(--color-green);
+}
+
+.classification-card.yellow .classification-icon,
+.classification-card.yellow h3 {
+    color: var(--color-yellow);
+}
+
+.classification-card.red .classification-icon,
+.classification-card.red h3 {
+    color: var(--color-red);
+}
+
+.classification-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.classification-title {
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.classification-card p {
+    font-size: 0.875rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+/* Roadmap Section */
+.roadmap-intro {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+    max-width: 700px;
+}
+
+.roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+.roadmap-card {
+    background: #F8F9FA;
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    position: relative;
+}
+
+.roadmap-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--border-radius);
+    background: var(--consello-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-md);
+    color: #666;
+}
+
+.roadmap-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.roadmap-card p {
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+}
+
+.roadmap-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.5rem;
+    background: var(--consello-white);
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    color: #666;
+}
+
+/* Tech Section */
+.tech-section {
+    border-bottom: none;
+    text-align: center;
+}
+
+.tech-intro {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto var(--space-lg);
+}
+
+.tech-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.tech-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--consello-black);
+    color: var(--consello-white);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+/* About Page Responsive */
+@media (max-width: 900px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .roadmap-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .classification-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .steps-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .step-arrow {
+        transform: rotate(90deg);
+        padding: var(--space-xs) 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .about-hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .about-subtitle {
+        font-size: 1rem;
+    }
+
+    .roadmap-grid {
+        grid-template-columns: 1fr;
+    }
+}
