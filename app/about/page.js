@@ -12,11 +12,9 @@ export default function AboutPage() {
         </div>
         <nav className="nav">
           <Link href="/" className="nav-btn">Analyze</Link>
-          <button className="nav-btn active">About</button>
+          <Link href="/about" className="nav-btn active">About</Link>
         </nav>
-        <div className="header-actions">
-          <Link href="/" className="btn btn-ghost btn-sm">Back to App</Link>
-        </div>
+        <div className="header-actions"></div>
       </header>
 
       <main className="about-main">

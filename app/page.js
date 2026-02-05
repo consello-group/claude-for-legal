@@ -465,10 +465,10 @@ export default function Home() {
           <span className="logo-text">CONSELLO</span>
         </div>
         <nav className="nav">
-          <button className="nav-btn active">Analyze</button>
+          <Link href="/" className="nav-btn active">Analyze</Link>
+          <Link href="/about" className="nav-btn">About</Link>
         </nav>
         <div className="header-actions">
-          <Link href="/about" className="btn btn-ghost btn-sm">About</Link>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {
