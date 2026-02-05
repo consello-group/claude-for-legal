@@ -232,7 +232,7 @@ ${document}
 Provide your analysis following the specified output format.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-20250514',
+      model: 'claude-opus-4-6-20250219',
       max_tokens: 4096,
       messages: [
         {
