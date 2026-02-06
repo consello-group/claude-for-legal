@@ -81,129 +81,6 @@ const LEGAL_PLAYBOOK = `
 - Requires senior counsel
 `;
 
-// ============================================
-// LEGACY MARKDOWN PROMPTS (for backward compatibility)
-// ============================================
-
-const NDA_TRIAGE_PROMPT = `You are a legal analyst for Consello LLC reviewing NDAs against the organizational playbook.
-
-${LEGAL_PLAYBOOK}
-
-Analyze the provided NDA document and produce a structured triage report.
-
-OUTPUT FORMAT (use this exact structure):
-
-## NDA Triage Report
-
-**Classification**: [🟢 GREEN / 🟡 YELLOW / 🔴 RED] — [Brief summary]
-**Document**: [filename or "Provided NDA"]
-**Parties**: [Party A] ↔ [Party B] (or indicate direction for unilateral)
-**Type**: [Mutual / Unilateral (disclosing) / Unilateral (receiving)]
-**Term**: [X years] with [Y-year] survival
-**Governing Law**: [Jurisdiction]
-
----
-
-## Screening Results
-
-| Criterion | Status | Notes |
-|-----------|--------|-------|
-| Mutual Obligations | ✅ PASS / ⚠️ FLAG / ❌ FAIL | [Brief note] |
-| Term Length | ✅/⚠️/❌ | [Note] |
-| Survival Period | ✅/⚠️/❌ | [Note] |
-| Public Info Carveout | ✅/⚠️/❌ | [Note] |
-| Prior Possession | ✅/⚠️/❌ | [Note] |
-| Independent Development | ✅/⚠️/❌ | [Note] |
-| Legal Compulsion | ✅/⚠️/❌ | [Note] |
-| Third-Party Receipt | ✅/⚠️/❌ | [Note] |
-| Non-Compete Clause | ✅/⚠️/❌ | [Note] |
-| Non-Solicitation | ✅/⚠️/❌ | [Note] |
-| Governing Law | ✅/⚠️/❌ | [Note] |
-| Remedies | ✅/⚠️/❌ | [Note] |
-
----
-
-## Issues Found
-
-[For each issue, use this format:]
-
-### Issue N — [YELLOW/RED]: [Issue Title]
-**What**: [Description of the problematic provision]
-**Risk**: [Business/legal risk this creates]
-**Recommendation**: [Specific action to take]
-
----
-
-## Recommendation
-
-[Clear recommendation: approve, negotiate specific terms, or reject with counterproposal]
-
-## Next Steps
-
-1. [Specific action]
-2. [Specific action]
-3. [Specific action]
-
----
-
-*This analysis assists with legal workflows but does not constitute legal advice.*`;
-
-const CONTRACT_REVIEW_PROMPT = `You are a legal analyst for Consello LLC reviewing contracts against the organizational playbook.
-
-${LEGAL_PLAYBOOK}
-
-Analyze the provided contract and produce a structured review report.
-
-OUTPUT FORMAT:
-
-## Contract Review Summary
-
-**Document**: [name]
-**Parties**: [names and roles]
-**Contract Type**: [Service Agreement / License / etc.]
-**Your Side**: [vendor/customer/etc.]
-**Overall Assessment**: [🟢 GREEN / 🟡 YELLOW / 🔴 RED]
-
----
-
-## Key Findings
-
-[Top 3-5 issues with severity indicators]
-
----
-
-## Clause-by-Clause Analysis
-
-### [Clause Category] — [🟢/🟡/🔴]
-**Contract says**: [summary of actual language]
-**Playbook position**: [what our standard is]
-**Deviation**: [describe the gap, if any]
-**Business impact**: [what this means practically]
-**Redline suggestion**: [specific alternative language if needed]
-
-[Repeat for each major clause category: Liability, Indemnification, IP, Data Protection, Confidentiality, Term, Governing Law, Payment]
-
----
-
-## Negotiation Strategy
-
-**Must-haves**: [Non-negotiable changes]
-**Nice-to-haves**: [Preferred but flexible]
-**Concession candidates**: [What we could give up]
-
-## Next Steps
-
-1. [Action]
-2. [Action]
-
----
-
-*This analysis assists with legal workflows but does not constitute legal advice.*`;
-
-// ============================================
-// ENHANCED JSON PROMPTS (with block references)
-// ============================================
-
 const BLOCK_REFERENCE_INSTRUCTIONS = `
 IMPORTANT: The document has been annotated with block IDs in the format: [BLOCK:uuid]content[/BLOCK]
 
@@ -223,26 +100,55 @@ Each issue should have:
 - A "fallback" variant (acceptable compromise) when applicable
 `;
 
-const NDA_TRIAGE_JSON_PROMPT = `You are a legal analyst for Consello LLC reviewing NDAs against the organizational playbook.
+// ============================================
+// UNIFIED CONTRACT ANALYSIS PROMPT
+// ============================================
+
+const UNIFIED_ANALYSIS_PROMPT = `You are a legal analyst for Consello LLC. Your job is to analyze legal documents against the organizational playbook.
+
+FIRST: Determine if this document is a legal contract or agreement.
+
+Legal contracts/agreements include:
+- Non-Disclosure Agreements (NDAs), Confidentiality Agreements
+- Service Agreements, Master Service Agreements (MSAs)
+- Software License Agreements, SaaS Agreements
+- Employment Agreements, Consulting Agreements
+- Purchase Agreements, Vendor Agreements
+- Letters of Intent (LOIs) with binding provisions
+- Amendments to existing agreements
+
+NOT legal contracts (return isContract: false):
+- Marketing materials, brochures, pitch decks
+- Internal memos, meeting notes
+- Articles, blog posts, news
+- Resumes, CVs
+- General correspondence without legal obligations
+- Technical documentation, user manuals
+- Financial statements, reports
 
 ${LEGAL_PLAYBOOK}
 
 ${BLOCK_REFERENCE_INSTRUCTIONS}
 
-Analyze the provided NDA document and return a JSON object with this EXACT structure:
+Analyze the document and return a JSON object with this EXACT structure:
 
 {
+  "isContract": true | false,
+  "documentType": "NDA | Service Agreement | License Agreement | Employment Agreement | Other Contract | Not a Contract",
+  "notContractReason": "Only if isContract is false - explain what the document actually is",
+
+  // The following fields are ONLY included if isContract is true:
   "classification": "green" | "yellow" | "red",
   "level": "GREEN" | "YELLOW" | "RED",
-  "summary": "Brief 1-sentence summary",
+  "summary": "Brief 1-sentence summary of the analysis",
   "document": "filename",
-  "parties": "Party A ↔ Party B",
-  "type": "Mutual | Unilateral (disclosing) | Unilateral (receiving)",
-  "term": "X years with Y-year survival",
+  "parties": "Party A ↔ Party B (or describe the parties)",
+  "type": "Specific contract type (Mutual NDA, Service Agreement, etc.)",
+  "term": "Contract duration and any survival periods",
   "governingLaw": "Jurisdiction",
   "screening": [
     {
-      "criterion": "Mutual Obligations",
+      "criterion": "Criterion name",
       "status": "pass" | "flag" | "fail",
       "note": "Brief explanation"
     }
@@ -260,7 +166,7 @@ Analyze the provided NDA document and return a JSON object with this EXACT struc
       "editPlans": [
         {
           "variant": "preferred",
-          "description": "Why this change",
+          "description": "Why this change - stronger Consello position",
           "operations": [
             {
               "id": "edit-1",
@@ -276,7 +182,7 @@ Analyze the provided NDA document and return a JSON object with this EXACT struc
         },
         {
           "variant": "fallback",
-          "description": "Compromise position",
+          "description": "Acceptable compromise position",
           "operations": [...]
         }
       ]
@@ -286,7 +192,9 @@ Analyze the provided NDA document and return a JSON object with this EXACT struc
   "nextSteps": ["Step 1", "Step 2", "Step 3"]
 }
 
-SCREENING CRITERIA to evaluate:
+SCREENING CRITERIA - evaluate all that apply based on document type:
+
+For NDAs:
 - Mutual Obligations
 - Term Length
 - Survival Period
@@ -300,72 +208,7 @@ SCREENING CRITERIA to evaluate:
 - Governing Law
 - Remedies
 
-Return ONLY valid JSON. No markdown, no explanation text outside the JSON.`;
-
-const CONTRACT_REVIEW_JSON_PROMPT = `You are a legal analyst for Consello LLC reviewing contracts against the organizational playbook.
-
-${LEGAL_PLAYBOOK}
-
-${BLOCK_REFERENCE_INSTRUCTIONS}
-
-Analyze the provided contract and return a JSON object with this EXACT structure:
-
-{
-  "classification": "green" | "yellow" | "red",
-  "level": "GREEN" | "YELLOW" | "RED",
-  "summary": "Brief 1-sentence summary",
-  "document": "filename",
-  "parties": "Party names and roles",
-  "type": "Service Agreement | License | etc.",
-  "term": "Contract duration",
-  "governingLaw": "Jurisdiction",
-  "screening": [
-    {
-      "criterion": "Limitation of Liability",
-      "status": "pass" | "flag" | "fail",
-      "note": "Brief explanation of what the contract says vs playbook"
-    }
-  ],
-  "issues": [
-    {
-      "id": "issue-1",
-      "severity": "yellow" | "red",
-      "title": "Issue title",
-      "description": "What the contract clause says",
-      "risk": "Business/legal risk this creates",
-      "recommendation": "Specific action to take",
-      "sourceBlockIds": ["block-uuid-1"],
-      "sourceQuote": "Exact quote from document",
-      "editPlans": [
-        {
-          "variant": "preferred",
-          "description": "Consello standard position",
-          "operations": [
-            {
-              "id": "edit-1",
-              "type": "replace_range",
-              "blockId": "block-uuid",
-              "startChar": 0,
-              "endChar": 50,
-              "newText": "Replacement language",
-              "comment": "Explanation for Word comment",
-              "issueId": "issue-1"
-            }
-          ]
-        },
-        {
-          "variant": "fallback",
-          "description": "Acceptable compromise",
-          "operations": [...]
-        }
-      ]
-    }
-  ],
-  "recommendation": "Overall recommendation paragraph",
-  "nextSteps": ["Step 1", "Step 2"]
-}
-
-SCREENING CRITERIA to evaluate:
+For Service/License Agreements:
 - Limitation of Liability
 - Indemnification
 - IP Ownership
@@ -393,25 +236,13 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { document, analysisType, filename, outputFormat = 'markdown' } = body;
+    const { document, filename } = body;
 
     if (!document) {
       return NextResponse.json(
         { error: 'Document content is required' },
         { status: 400 }
       );
-    }
-
-    // Select prompt based on analysis type and output format
-    let systemPrompt;
-    if (outputFormat === 'json') {
-      systemPrompt = analysisType === 'contract-review'
-        ? CONTRACT_REVIEW_JSON_PROMPT
-        : NDA_TRIAGE_JSON_PROMPT;
-    } else {
-      systemPrompt = analysisType === 'contract-review'
-        ? CONTRACT_REVIEW_PROMPT
-        : NDA_TRIAGE_PROMPT;
     }
 
     const userMessage = `Please analyze this document:
@@ -422,74 +253,69 @@ Filename: ${filename || 'document.txt'}
 ${document}
 ---
 
-${outputFormat === 'json' ? 'Return ONLY valid JSON as specified in the system prompt.' : 'Provide your analysis following the specified output format.'}`;
+Return ONLY valid JSON as specified in the system prompt. First determine if this is a legal contract, then analyze accordingly.`;
 
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
-      max_tokens: 8192, // Increased for JSON output with edit plans
+      max_tokens: 8192,
       messages: [
         {
           role: 'user',
           content: userMessage
         }
       ],
-      system: systemPrompt,
+      system: UNIFIED_ANALYSIS_PROMPT,
     });
 
     const analysisText = message.content[0].text;
 
-    // If JSON format requested, try to parse and validate
-    if (outputFormat === 'json') {
-      try {
-        // Extract JSON from response (in case there's any wrapper text)
-        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON object found in response');
-        }
+    try {
+      // Extract JSON from response (in case there's any wrapper text)
+      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON object found in response');
+      }
 
-        const analysisJson = JSON.parse(jsonMatch[0]);
+      const analysisJson = JSON.parse(jsonMatch[0]);
 
-        // Validate required fields
-        if (!analysisJson.classification || !analysisJson.issues) {
-          throw new Error('Missing required fields in analysis JSON');
-        }
-
+      // Check if it's a contract
+      if (analysisJson.isContract === false) {
         return NextResponse.json({
           success: true,
-          analysis: analysisJson,
-          rawAnalysis: analysisText,
-          outputFormat: 'json',
-          usage: {
-            input_tokens: message.usage.input_tokens,
-            output_tokens: message.usage.output_tokens,
-          }
-        });
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        // Fall back to returning raw text
-        return NextResponse.json({
-          success: true,
-          analysis: analysisText,
-          outputFormat: 'markdown',
-          parseError: parseError.message,
+          isContract: false,
+          documentType: analysisJson.documentType || 'Unknown',
+          notContractReason: analysisJson.notContractReason || 'This document does not appear to be a legal contract.',
           usage: {
             input_tokens: message.usage.input_tokens,
             output_tokens: message.usage.output_tokens,
           }
         });
       }
+
+      // Validate required fields for contracts
+      if (!analysisJson.classification) {
+        throw new Error('Missing classification in analysis JSON');
+      }
+
+      return NextResponse.json({
+        success: true,
+        isContract: true,
+        analysis: analysisJson,
+        rawAnalysis: analysisText,
+        usage: {
+          input_tokens: message.usage.input_tokens,
+          output_tokens: message.usage.output_tokens,
+        }
+      });
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to parse analysis response',
+        rawAnalysis: analysisText,
+        parseError: parseError.message,
+      }, { status: 500 });
     }
-
-    // Markdown format (legacy)
-    return NextResponse.json({
-      success: true,
-      analysis: analysisText,
-      outputFormat: 'markdown',
-      usage: {
-        input_tokens: message.usage.input_tokens,
-        output_tokens: message.usage.output_tokens,
-      }
-    });
 
   } catch (error) {
     console.error('Analysis error:', error);
