@@ -82,22 +82,8 @@ const LEGAL_PLAYBOOK = `
 `;
 
 const BLOCK_REFERENCE_INSTRUCTIONS = `
-IMPORTANT: The document has been annotated with block IDs in the format: [BLOCK:uuid]content[/BLOCK]
-
-When you identify issues, you MUST:
-1. Reference the specific block ID(s) where the issue appears in the "sourceBlockIds" array
-2. Include an exact quote from the document in "sourceQuote"
-3. Provide edit operations that reference these block IDs with character offsets
-
-EDIT OPERATION RULES:
-- Use "replace_range" with EXACT substrings that appear in the block
-- Keep formatting-neutral (no markdown in replacement text)
-- Keep changes clause-local - don't change surrounding context
-- Do NOT change business economics unless the playbook requires it; if you do, flag it in the comment
-
-Each issue should have:
-- A "preferred" variant (stronger Consello position)
-- A "fallback" variant (acceptable compromise) when applicable
+If the document has block IDs in the format [BLOCK:uuid]content[/BLOCK], reference them in sourceBlockIds.
+Include a short sourceQuote (max 150 chars) from the problematic text.
 `;
 
 // ============================================
@@ -133,63 +119,40 @@ ${BLOCK_REFERENCE_INSTRUCTIONS}
 Analyze the document and return a JSON object with this EXACT structure:
 
 {
-  "isContract": true | false,
-  "documentType": "NDA | Service Agreement | License Agreement | Employment Agreement | Other Contract | Not a Contract",
-  "notContractReason": "Only if isContract is false - explain what the document actually is",
-
-  // The following fields are ONLY included if isContract is true:
-  "classification": "green" | "yellow" | "red",
-  "level": "GREEN" | "YELLOW" | "RED",
-  "summary": "Brief 1-sentence summary of the analysis",
+  "isContract": true,
+  "documentType": "NDA",
+  "classification": "green",
+  "level": "GREEN",
+  "summary": "Brief summary",
   "document": "filename",
-  "parties": "Party A ↔ Party B (or describe the parties)",
-  "type": "Specific contract type (Mutual NDA, Service Agreement, etc.)",
-  "term": "Contract duration and any survival periods",
-  "governingLaw": "Jurisdiction",
+  "parties": "Party A ↔ Party B",
+  "type": "Mutual NDA",
+  "term": "2 years",
+  "governingLaw": "New York",
   "screening": [
-    {
-      "criterion": "Criterion name",
-      "status": "pass" | "flag" | "fail",
-      "note": "Brief explanation"
-    }
+    {"criterion": "Criterion name", "status": "pass", "note": "Brief note"}
   ],
   "issues": [
     {
       "id": "issue-1",
-      "severity": "yellow" | "red",
+      "severity": "yellow",
       "title": "Issue title",
-      "description": "What the problematic provision says",
-      "risk": "Business/legal risk this creates",
-      "recommendation": "Specific action to take",
-      "sourceBlockIds": ["block-uuid-1", "block-uuid-2"],
-      "sourceQuote": "Exact quote from document (max 200 chars)",
-      "editPlans": [
-        {
-          "variant": "preferred",
-          "description": "Why this change - stronger Consello position",
-          "operations": [
-            {
-              "id": "edit-1",
-              "type": "replace_range",
-              "blockId": "block-uuid",
-              "startChar": 0,
-              "endChar": 50,
-              "newText": "Replacement text",
-              "comment": "Explanation for Word comment",
-              "issueId": "issue-1"
-            }
-          ]
-        },
-        {
-          "variant": "fallback",
-          "description": "Acceptable compromise position",
-          "operations": [...]
-        }
-      ]
+      "description": "What the provision says",
+      "risk": "Business risk",
+      "recommendation": "Action to take",
+      "sourceBlockIds": [],
+      "sourceQuote": "Quote (max 150 chars)"
     }
   ],
-  "recommendation": "Overall recommendation paragraph",
-  "nextSteps": ["Step 1", "Step 2", "Step 3"]
+  "recommendation": "Overall recommendation",
+  "nextSteps": ["Step 1", "Step 2"]
+}
+
+If NOT a contract, return:
+{
+  "isContract": false,
+  "documentType": "Not a Contract",
+  "notContractReason": "This appears to be a resume/article/memo/etc."
 }
 
 SCREENING CRITERIA - evaluate all that apply based on document type:
@@ -256,8 +219,8 @@ ${document}
 Return ONLY valid JSON as specified in the system prompt. First determine if this is a legal contract, then analyze accordingly.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 8192,
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -270,13 +233,44 @@ Return ONLY valid JSON as specified in the system prompt. First determine if thi
     const analysisText = message.content[0].text;
 
     try {
-      // Extract JSON from response (in case there's any wrapper text)
-      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      // Extract JSON from response - find the outermost balanced braces
+      let jsonStr = analysisText.trim();
+
+      // Remove markdown code blocks if present
+      if (jsonStr.startsWith('```json')) {
+        jsonStr = jsonStr.slice(7);
+      } else if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.slice(3);
+      }
+      if (jsonStr.endsWith('```')) {
+        jsonStr = jsonStr.slice(0, -3);
+      }
+      jsonStr = jsonStr.trim();
+
+      // Find the first { and match to its closing }
+      const startIdx = jsonStr.indexOf('{');
+      if (startIdx === -1) {
         throw new Error('No JSON object found in response');
       }
 
-      const analysisJson = JSON.parse(jsonMatch[0]);
+      // Find matching closing brace
+      let braceCount = 0;
+      let endIdx = -1;
+      for (let i = startIdx; i < jsonStr.length; i++) {
+        if (jsonStr[i] === '{') braceCount++;
+        if (jsonStr[i] === '}') braceCount--;
+        if (braceCount === 0) {
+          endIdx = i;
+          break;
+        }
+      }
+
+      if (endIdx === -1) {
+        throw new Error('Unbalanced JSON braces in response');
+      }
+
+      jsonStr = jsonStr.slice(startIdx, endIdx + 1);
+      const analysisJson = JSON.parse(jsonStr);
 
       // Check if it's a contract
       if (analysisJson.isContract === false) {
