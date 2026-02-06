@@ -1,14 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutPage() {
   return (
     <>
       <header className="header">
         <div className="logo">
-          <div className="logo-box"></div>
-          <span className="logo-text">CONSELLO</span>
+          <Image
+            src="/consello-logo.jpg"
+            alt="Consello"
+            width={140}
+            height={40}
+            className="logo-image"
+            style={{ objectFit: 'contain' }}
+          />
         </div>
         <nav className="nav">
           <Link href="/" className="nav-btn">Analyze</Link>
@@ -17,15 +24,28 @@ export default function AboutPage() {
         <div className="header-actions"></div>
       </header>
 
-      <main className="about-main">
-        {/* Hero Section */}
-        <section className="about-hero">
+      {/* Hero Section with Background Image */}
+      <section className="about-hero-banner">
+        <div className="hero-bg-wrapper">
+          <Image
+            src="/hero-bg.jpg"
+            alt=""
+            fill
+            priority
+            style={{ objectFit: 'cover' }}
+          />
+          <div className="hero-overlay"></div>
+        </div>
+        <div className="hero-content">
           <h1>AI-Powered Legal Analysis</h1>
           <p className="about-subtitle">
             Streamline contract review and NDA triage with intelligent automation
             built on Anthropic's Claude.
           </p>
-        </section>
+        </div>
+      </section>
+
+      <main className="about-main">
 
         {/* Current Features */}
         <section className="features-section">

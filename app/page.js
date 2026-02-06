@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import ReviewDashboard from './components/ReviewDashboard';
 
 // Demo data for instant demos without API
 const DEMO_DATA = {
@@ -179,10 +181,13 @@ export default function Home() {
   // App state
   const [currentDocument, setCurrentDocument] = useState(null);
   const [documentContent, setDocumentContent] = useState('');
+  const [parsedDocument, setParsedDocument] = useState(null); // Structured doc with block IDs
   const [analysisType, setAnalysisType] = useState('nda-triage');
   const [results, setResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('triage'); // 'triage' | 'review' | 'redline'
 
   // Check for stored auth on mount
   useEffect(() => {
@@ -233,17 +238,46 @@ export default function Home() {
       name: file.name,
       size: formatFileSize(file.size),
     });
+    setParsedDocument(null); // Reset parsed document
+    setError('');
 
     if (ext === '.txt') {
       const content = await file.text();
       setDocumentContent(content);
+    } else if (ext === '.docx') {
+      // Parse DOCX using our new endpoint
+      setIsParsing(true);
+      try {
+        const buffer = await file.arrayBuffer();
+        const res = await fetch(`/api/parse-docx?filename=${encodeURIComponent(file.name)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'x-app-password': password,
+          },
+          body: buffer,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to parse DOCX');
+        }
+
+        // Store both the parsed document and the plain text content
+        setParsedDocument(data.document);
+        setDocumentContent(data.document.fullText);
+      } catch (err) {
+        setError(`DOCX parsing failed: ${err.message}`);
+        setDocumentContent(`[DOCX parsing error - ${err.message}]`);
+      } finally {
+        setIsParsing(false);
+      }
     } else {
-      setDocumentContent(`[${ext.toUpperCase()} file uploaded - ready for analysis]`);
-      // For PDF/DOCX, we'd need additional processing
-      // For now, we'll show a message about text extraction
+      // PDF and DOC files - placeholder for now
+      setDocumentContent(`[${ext.toUpperCase()} file uploaded - PDF/DOC parsing coming soon]`);
     }
-    setError('');
-  }, []);
+  }, [password]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
@@ -269,6 +303,8 @@ export default function Home() {
   const clearDocument = () => {
     setCurrentDocument(null);
     setDocumentContent('');
+    setParsedDocument(null);
+    setResults(null);
   };
 
   // Run demo (no API call)
@@ -287,6 +323,12 @@ export default function Home() {
     setError('');
 
     try {
+      // Determine whether to use JSON mode (when we have parsed document with block IDs)
+      const useJsonMode = !!parsedDocument;
+
+      // Use annotated text if we have a parsed document, otherwise use raw content
+      const docContent = useJsonMode ? parsedDocument.annotatedText : documentContent;
+
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
@@ -294,9 +336,10 @@ export default function Home() {
           'x-app-password': password,
         },
         body: JSON.stringify({
-          document: documentContent,
+          document: docContent,
           analysisType,
           filename: currentDocument?.name,
+          outputFormat: useJsonMode ? 'json' : 'markdown',
         }),
       });
 
@@ -306,9 +349,18 @@ export default function Home() {
         throw new Error(data.error || 'Analysis failed');
       }
 
-      // Parse the markdown response into structured data
-      const parsed = parseAnalysisResponse(data.analysis);
-      setResults(parsed);
+      // Handle response based on output format
+      if (data.outputFormat === 'json' && typeof data.analysis === 'object') {
+        // JSON response - use directly (already structured)
+        setResults({
+          ...data.analysis,
+          rawAnalysis: data.rawAnalysis || JSON.stringify(data.analysis, null, 2),
+        });
+      } else {
+        // Markdown response - parse into structured data
+        const parsed = parseAnalysisResponse(data.analysis);
+        setResults(parsed);
+      }
 
     } catch (err) {
       setError(err.message);
@@ -432,8 +484,14 @@ export default function Home() {
       <div className="login-container">
         <div className="login-box">
           <div className="logo">
-            <div className="logo-box"></div>
-            <span className="logo-text">CONSELLO</span>
+            <Image
+              src="/consello-logo.jpg"
+              alt="Consello"
+              width={140}
+              height={40}
+              className="logo-image"
+              style={{ objectFit: 'contain' }}
+            />
           </div>
           <h1>Legal Document Analysis</h1>
           <p>Enter password to access</p>
@@ -456,13 +514,30 @@ export default function Home() {
     );
   }
 
-  // Main app
+  // Review Dashboard mode
+  if (viewMode === 'review' && parsedDocument && results) {
+    return (
+      <ReviewDashboard
+        parsedDocument={parsedDocument}
+        analysisResult={results}
+        onBack={() => setViewMode('triage')}
+      />
+    );
+  }
+
+  // Main app (triage mode)
   return (
     <>
       <header className="header">
         <div className="logo">
-          <div className="logo-box"></div>
-          <span className="logo-text">CONSELLO</span>
+          <Image
+            src="/consello-logo.jpg"
+            alt="Consello"
+            width={140}
+            height={40}
+            className="logo-image"
+            style={{ objectFit: 'contain' }}
+          />
         </div>
         <nav className="nav">
           <Link href="/" className="nav-btn active">Analyze</Link>
@@ -533,15 +608,27 @@ export default function Home() {
                     <span className="document-icon">📄</span>
                     <div>
                       <span className="document-name">{currentDocument.name}</span>
-                      <span className="document-meta">{currentDocument.size}</span>
+                      <span className="document-meta">
+                        {currentDocument.size}
+                        {parsedDocument && (
+                          <> · {parsedDocument.metadata.blockCount} blocks · {parsedDocument.metadata.wordCount} words</>
+                        )}
+                      </span>
                     </div>
                   </div>
                   <button className="btn-icon-small" onClick={clearDocument}>✕</button>
                 </div>
-                <div className="document-content">
-                  {documentContent.substring(0, 2000)}
-                  {documentContent.length > 2000 && '\n\n[Preview truncated...]'}
-                </div>
+                {isParsing ? (
+                  <div className="document-content" style={{ textAlign: 'center', padding: '2rem' }}>
+                    <span className="spinner"></span>
+                    <p style={{ marginTop: '1rem', color: '#666' }}>Parsing DOCX...</p>
+                  </div>
+                ) : (
+                  <div className="document-content">
+                    {documentContent.substring(0, 2000)}
+                    {documentContent.length > 2000 && '\n\n[Preview truncated...]'}
+                  </div>
+                )}
               </div>
             )}
 
@@ -574,15 +661,23 @@ export default function Home() {
             <button
               className="btn btn-primary btn-large btn-analyze"
               onClick={runAnalysis}
-              disabled={isAnalyzing || !currentDocument}
+              disabled={isAnalyzing || isParsing || !currentDocument}
             >
               {isAnalyzing ? (
                 <>
                   <span className="spinner"></span>
                   Analyzing...
                 </>
+              ) : isParsing ? (
+                <>
+                  <span className="spinner"></span>
+                  Parsing...
+                </>
               ) : (
-                'Analyze with Claude'
+                <>
+                  Analyze with Claude
+                  {parsedDocument && <span style={{ fontSize: '0.75em', opacity: 0.7 }}> (Enhanced)</span>}
+                </>
               )}
             </button>
 
@@ -595,6 +690,11 @@ export default function Home() {
               <h2>Analysis Results</h2>
               {results && (
                 <div className="panel-actions">
+                  {parsedDocument && results.issues?.length > 0 && (
+                    <button className="btn btn-sm btn-secondary" onClick={() => setViewMode('review')}>
+                      Review Dashboard
+                    </button>
+                  )}
                   <button className="btn btn-sm btn-ghost" onClick={() => navigator.clipboard.writeText(results.rawAnalysis || JSON.stringify(results, null, 2))}>
                     Copy
                   </button>
