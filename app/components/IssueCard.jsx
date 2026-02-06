@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 const ChevronIcon = ({ open }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
     transition: "transform 0.2s ease",
@@ -14,8 +16,16 @@ const ChevronIcon = ({ open }) => (
  * Expects issue shape: { title, severity ('critical'|'warning'), section, detail, suggestion }
  */
 export default function IssueCard({ issue, isOpen, onToggle }) {
+  const [copied, setCopied] = useState(false);
   const severityColor = issue.severity === 'critical' ? '#DC2626' : '#F59E0B';
   const severityLabel = issue.severity === 'critical' ? 'CRITICAL' : 'WARNING';
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   return (
     <div style={{
@@ -61,11 +71,25 @@ export default function IssueCard({ issue, isOpen, onToggle }) {
             <div style={{
               fontSize: '13px', lineHeight: 1.6, padding: '12px 14px', borderRadius: '8px',
               background: 'rgba(166, 74, 48, 0.04)', border: '1px solid rgba(166, 74, 48, 0.1)',
+              position: 'relative',
             }}>
-              <span style={{
-                fontWeight: 600, color: '#A64A30', fontSize: '11px',
-                textTransform: 'uppercase', letterSpacing: '0.3px',
-              }}>Suggested edit</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{
+                  fontWeight: 600, color: '#A64A30', fontSize: '11px',
+                  textTransform: 'uppercase', letterSpacing: '0.3px',
+                }}>Suggested edit</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(issue.suggestion); }}
+                  style={{
+                    fontSize: '11px', fontWeight: 500, color: copied ? '#16A34A' : '#A64A30',
+                    background: 'none', border: '1px solid ' + (copied ? 'rgba(22,163,74,0.2)' : 'rgba(166,74,48,0.15)'),
+                    borderRadius: '6px', padding: '3px 10px', cursor: 'pointer',
+                    fontFamily: "'DM Sans', Arial, sans-serif", transition: 'all 0.15s ease',
+                  }}
+                >
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
               <div style={{ marginTop: '4px', color: '#555' }}>{issue.suggestion}</div>
             </div>
           )}

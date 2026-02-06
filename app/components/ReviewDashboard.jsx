@@ -126,6 +126,8 @@ export default function ReviewDashboard({
 }) {
   const [openIssue, setOpenIssue] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('severity');
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -137,6 +139,14 @@ export default function ReviewDashboard({
   const criticalCount = result.issues.filter(i => i.severity === 'critical').length;
   const warningCount = result.issues.filter(i => i.severity === 'warning').length;
   const theme = THEMES[result.verdict];
+
+  // Filtered and sorted issues for display
+  const filteredIssues = severityFilter === 'all'
+    ? result.issues
+    : result.issues.filter(i => i.severity === severityFilter);
+  const sortedIssues = sortOrder === 'severity'
+    ? [...filteredIssues].sort((a, b) => (a.severity === 'critical' ? 0 : 1) - (b.severity === 'critical' ? 0 : 1))
+    : filteredIssues;
 
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif", background: "#F8F9FA", minHeight: "100vh" }}>
@@ -350,12 +360,36 @@ export default function ReviewDashboard({
               )}
             </div>
 
+            {/* Filter buttons */}
+            {hasIssues && result.issues.length > 1 && (
+              <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+                {[
+                  { key: 'all', label: `All (${result.issues.length})` },
+                  ...(criticalCount > 0 ? [{ key: 'critical', label: `Critical (${criticalCount})` }] : []),
+                  ...(warningCount > 0 ? [{ key: 'warning', label: `Warning (${warningCount})` }] : []),
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => { setSeverityFilter(f.key); setOpenIssue(0); }}
+                    style={{
+                      fontSize: "11px", fontWeight: 600, padding: "5px 12px", borderRadius: "9999px",
+                      border: severityFilter === f.key ? "1px solid #000" : "1px solid rgba(0,0,0,0.1)",
+                      background: severityFilter === f.key ? "#000" : "#fff",
+                      color: severityFilter === f.key ? "#fff" : "#666",
+                      cursor: "pointer", fontFamily: "'DM Sans', Arial, sans-serif",
+                      transition: "all 0.15s ease",
+                    }}
+                  >{f.label}</button>
+                ))}
+              </div>
+            )}
+
             {/* Issue cards or empty state */}
             {hasIssues ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {result.issues.map((issue, i) => (
+                {sortedIssues.map((issue, i) => (
                   <IssueCard
-                    key={i}
+                    key={issue._original?.id || i}
                     issue={issue}
                     isOpen={openIssue === i}
                     onToggle={() => setOpenIssue(openIssue === i ? -1 : i)}

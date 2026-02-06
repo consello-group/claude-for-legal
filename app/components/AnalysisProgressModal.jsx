@@ -80,6 +80,7 @@ export default function AnalysisProgressModal({
   documentInfo,
   onCancel,
   onComplete,
+  streamProgress = 0,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [currentSubstep, setCurrentSubstep] = useState(0);
@@ -100,16 +101,42 @@ export default function AnalysisProgressModal({
     }
   }, [isOpen]);
 
-  // Progress bar calculation
+  // Progress bar calculation — use streamProgress when available, fallback to timer-based
   useEffect(() => {
     if (!isOpen) return;
+    if (streamProgress > 0) {
+      setProgress(Math.min(streamProgress, 100));
+      // Sync step animations to stream progress
+      if (streamProgress < 15) {
+        if (currentStep > 0) return;
+      } else if (streamProgress < 50) {
+        if (!completedSteps.has(0)) {
+          setCompletedSteps(s => new Set([...s, 0]));
+          setCurrentStep(1);
+          setCurrentSubstep(0);
+        }
+      } else if (streamProgress < 85) {
+        if (!completedSteps.has(1)) {
+          setCompletedSteps(s => new Set([...s, 0, 1]));
+          setCurrentStep(2);
+          setCurrentSubstep(0);
+        }
+      } else {
+        if (!completedSteps.has(2)) {
+          setCompletedSteps(s => new Set([...s, 0, 1, 2]));
+          setCurrentStep(3);
+          setCurrentSubstep(0);
+        }
+      }
+      return;
+    }
     const totalDuration = STEPS.reduce((sum, s) => sum + s.duration, 0);
     const elapsed = STEPS.slice(0, currentStep).reduce((sum, s) => sum + s.duration, 0);
     const stepProgress = STEPS[currentStep]
       ? (currentSubstep / STEPS[currentStep].substeps.length) * STEPS[currentStep].duration
       : 0;
     setProgress(Math.min(((elapsed + stepProgress) / totalDuration) * 100, 98));
-  }, [currentStep, currentSubstep, isOpen]);
+  }, [currentStep, currentSubstep, isOpen, streamProgress, completedSteps]);
 
   // Step progression — cycles through substeps, then advances to next step
   useEffect(() => {

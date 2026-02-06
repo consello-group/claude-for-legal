@@ -145,7 +145,8 @@ ${document}
 
 Return ONLY valid JSON as specified in the system prompt. First determine if this is a legal contract, then analyze accordingly.`;
 
-    const message = await anthropic.messages.create({
+    // Use streaming to provide real-time progress
+    const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       messages: [
@@ -157,86 +158,115 @@ Return ONLY valid JSON as specified in the system prompt. First determine if thi
       system: UNIFIED_ANALYSIS_PROMPT,
     });
 
-    const analysisText = message.content[0].text;
+    // Create SSE response stream
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        const send = (data) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        };
 
-    try {
-      // Extract JSON from response - find the outermost balanced braces
-      let jsonStr = analysisText.trim();
+        let fullText = '';
+        let tokenCount = 0;
+        const estimatedTokens = 2500; // Rough estimate for progress bar
 
-      // Remove markdown code blocks if present
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.slice(7);
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.slice(3);
-      }
-      if (jsonStr.endsWith('```')) {
-        jsonStr = jsonStr.slice(0, -3);
-      }
-      jsonStr = jsonStr.trim();
+        try {
+          stream.on('text', (text) => {
+            fullText += text;
+            tokenCount += text.split(/\s+/).length; // Rough word-based approximation
+            const progress = Math.min(Math.round((tokenCount / estimatedTokens) * 90), 90);
+            send({ type: 'progress', progress, tokens: tokenCount });
+          });
 
-      // Find the first { and match to its closing }
-      const startIdx = jsonStr.indexOf('{');
-      if (startIdx === -1) {
-        throw new Error('No JSON object found in response');
-      }
+          const finalMessage = await stream.finalMessage();
 
-      // Find matching closing brace
-      let braceCount = 0;
-      let endIdx = -1;
-      for (let i = startIdx; i < jsonStr.length; i++) {
-        if (jsonStr[i] === '{') braceCount++;
-        if (jsonStr[i] === '}') braceCount--;
-        if (braceCount === 0) {
-          endIdx = i;
-          break;
-        }
-      }
+          // Parse the complete response
+          let jsonStr = fullText.trim();
 
-      if (endIdx === -1) {
-        throw new Error('Unbalanced JSON braces in response');
-      }
-
-      jsonStr = jsonStr.slice(startIdx, endIdx + 1);
-      const analysisJson = JSON.parse(jsonStr);
-
-      // Check if it's a contract
-      if (analysisJson.isContract === false) {
-        return NextResponse.json({
-          success: true,
-          isContract: false,
-          documentType: analysisJson.documentType || 'Unknown',
-          notContractReason: analysisJson.notContractReason || 'This document does not appear to be a legal contract.',
-          usage: {
-            input_tokens: message.usage.input_tokens,
-            output_tokens: message.usage.output_tokens,
+          // Remove markdown code blocks if present
+          if (jsonStr.startsWith('```json')) {
+            jsonStr = jsonStr.slice(7);
+          } else if (jsonStr.startsWith('```')) {
+            jsonStr = jsonStr.slice(3);
           }
-        });
-      }
+          if (jsonStr.endsWith('```')) {
+            jsonStr = jsonStr.slice(0, -3);
+          }
+          jsonStr = jsonStr.trim();
 
-      // Validate required fields for contracts
-      if (!analysisJson.classification) {
-        throw new Error('Missing classification in analysis JSON');
-      }
+          // Find the first { and match to its closing }
+          const startIdx = jsonStr.indexOf('{');
+          if (startIdx === -1) {
+            throw new Error('No JSON object found in response');
+          }
 
-      return NextResponse.json({
-        success: true,
-        isContract: true,
-        analysis: analysisJson,
-        rawAnalysis: analysisText,
-        usage: {
-          input_tokens: message.usage.input_tokens,
-          output_tokens: message.usage.output_tokens,
+          let braceCount = 0;
+          let endIdx = -1;
+          for (let i = startIdx; i < jsonStr.length; i++) {
+            if (jsonStr[i] === '{') braceCount++;
+            if (jsonStr[i] === '}') braceCount--;
+            if (braceCount === 0) {
+              endIdx = i;
+              break;
+            }
+          }
+
+          if (endIdx === -1) {
+            throw new Error('Unbalanced JSON braces in response');
+          }
+
+          jsonStr = jsonStr.slice(startIdx, endIdx + 1);
+          const analysisJson = JSON.parse(jsonStr);
+
+          const usage = {
+            input_tokens: finalMessage.usage.input_tokens,
+            output_tokens: finalMessage.usage.output_tokens,
+          };
+
+          // Check if it's a contract
+          if (analysisJson.isContract === false) {
+            send({
+              type: 'complete',
+              result: {
+                success: true,
+                isContract: false,
+                documentType: analysisJson.documentType || 'Unknown',
+                notContractReason: analysisJson.notContractReason || 'This document does not appear to be a legal contract.',
+                usage,
+              }
+            });
+          } else {
+            if (!analysisJson.classification) {
+              throw new Error('Missing classification in analysis JSON');
+            }
+
+            send({
+              type: 'complete',
+              result: {
+                success: true,
+                isContract: true,
+                analysis: analysisJson,
+                rawAnalysis: fullText,
+                usage,
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Stream/parse error:', err);
+          send({ type: 'error', message: err.message || 'Analysis failed' });
+        } finally {
+          controller.close();
         }
-      });
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to parse analysis response',
-        rawAnalysis: analysisText,
-        parseError: parseError.message,
-      }, { status: 500 });
-    }
+      }
+    });
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error) {
     console.error('Analysis error:', error);
