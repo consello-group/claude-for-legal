@@ -1,231 +1,386 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import RiskScorecard from './RiskScorecard';
-import ClauseMap from './ClauseMap';
-import DocumentViewer from './DocumentViewer';
+import { useState, useEffect, useCallback } from 'react';
 import IssueCard from './IssueCard';
 
-/**
- * ReviewDashboard - Main results view with interactive document review
- */
+// ─── SVG Icon Components ─────────────────────────────────────────────
+
+const FailIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="8" r="8" fill="#DC2626" fillOpacity="0.1" />
+    <path d="M5.5 10.5L10.5 5.5M5.5 5.5l5 5" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const PassIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="8" r="8" fill="#16A34A" fillOpacity="0.1" />
+    <path d="M5 8.5L7 10.5L11 6" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ExportIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <path d="M4 12h8M8 2v7M5 5l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ArrowLeftIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// ─── Theme Configuration ─────────────────────────────────────────────
+
+const THEMES = {
+  red: {
+    bannerBg: "#DC2626",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L2 20h20L12 2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M12 9v4M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  green: {
+    bannerBg: "#000",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#fff" strokeWidth="2" />
+        <path d="M7.5 12.5L10.5 15.5L16.5 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+};
+
+// ─── Data Mapping ────────────────────────────────────────────────────
+// Maps the existing AnalysisResult shape to the new UI fields
+
+function deriveResultData(analysisResult) {
+  const classification = analysisResult?.classification || 'green';
+  const issues = analysisResult?.issues || [];
+  const screening = analysisResult?.screening || [];
+
+  // Map severity: existing uses 'red'/'yellow'/'green', new UI uses 'critical'/'warning'
+  const mappedIssues = issues.map((issue, i) => ({
+    title: issue.title,
+    severity: issue.severity === 'red' ? 'critical' : 'warning',
+    section: issue.sourceQuote ? `Source` : `Issue ${i + 1}`,
+    detail: [issue.description, issue.risk ? `Risk: ${issue.risk}` : ''].filter(Boolean).join('\n\n'),
+    suggestion: issue.recommendation || '',
+    // Keep original data for interop
+    _original: issue,
+  }));
+
+  // Map screening: existing uses 'pass'/'flag'/'fail', new UI uses 'pass'/'fail'
+  const mappedScreening = screening.map(s => ({
+    criterion: s.criterion,
+    status: s.status === 'flag' ? 'fail' : s.status,
+    note: s.note,
+  }));
+
+  // Determine verdict
+  const verdict = classification === 'red' ? 'red' : 'green';
+
+  // Derive headline, label, description
+  let verdictHeadline, verdictLabel, verdictDesc;
+
+  if (classification === 'red') {
+    verdictHeadline = 'DO NOT SIGN';
+    verdictLabel = 'ESCALATE';
+    verdictDesc = analysisResult?.recommendation || 'This document contains provisions that violate playbook standards. Escalate to senior counsel.';
+  } else if (classification === 'yellow') {
+    verdictHeadline = 'REVIEW REQUIRED';
+    verdictLabel = 'COUNSEL REVIEW';
+    verdictDesc = analysisResult?.recommendation || 'Minor deviations found. Route to designated reviewer.';
+  } else {
+    verdictHeadline = 'APPROVED';
+    verdictLabel = 'STANDARD APPROVAL';
+    verdictDesc = analysisResult?.recommendation || 'This document meets all playbook standards.';
+  }
+
+  return {
+    document: analysisResult?.document || 'Document',
+    parties: analysisResult?.parties || '—',
+    type: analysisResult?.type || '—',
+    term: analysisResult?.term || '—',
+    governingLaw: analysisResult?.governingLaw || '—',
+    verdict,
+    verdictHeadline,
+    verdictLabel,
+    verdictDesc,
+    nextSteps: analysisResult?.nextSteps || [],
+    screening: mappedScreening,
+    issues: mappedIssues,
+  };
+}
+
+// ─── ReviewDashboard Component ───────────────────────────────────────
+
 export default function ReviewDashboard({
   parsedDocument,
   analysisResult,
   onBack,
   onExport,
 }) {
-  const [highlightedBlockIds, setHighlightedBlockIds] = useState([]);
-  const [expandedIssueId, setExpandedIssueId] = useState(null);
-  const [activeBlockId, setActiveBlockId] = useState(null);
+  const [openIssue, setOpenIssue] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
-  const blocks = parsedDocument?.blocks || [];
-  const issues = analysisResult?.issues || [];
-  const screening = analysisResult?.screening || [];
-  const classification = analysisResult?.classification || analysisResult?.level;
+  useEffect(() => { setMounted(true); }, []);
 
-  // Handle clicking "View in Document" on an issue
-  const handleViewInDocument = useCallback((blockIds) => {
-    setHighlightedBlockIds(blockIds);
-    setActiveBlockId(blockIds[0]);
-  }, []);
+  const result = deriveResultData(analysisResult);
 
-  // Handle clicking a block in the clause map
-  const handleClauseMapClick = useCallback((blockId) => {
-    setHighlightedBlockIds([blockId]);
-    setActiveBlockId(blockId);
-  }, []);
-
-  // Handle clicking a block in the document viewer
-  const handleBlockClick = useCallback((blockId, blockIssues) => {
-    setActiveBlockId(blockId);
-    if (blockIssues?.length > 0) {
-      setExpandedIssueId(blockIssues[0].id);
-    }
-  }, []);
-
-  // Toggle issue expansion
-  const handleToggleIssue = useCallback((issueId) => {
-    setExpandedIssueId((prev) => (prev === issueId ? null : issueId));
-  }, []);
-
-  // If no parsed document, show a simpler view with just screening results
-  const hasDocumentBlocks = blocks.length > 0;
+  const hasIssues = result.issues.length > 0;
+  const passCount = result.screening.filter(s => s.status === 'pass').length;
+  const failCount = result.screening.filter(s => s.status === 'fail').length;
+  const criticalCount = result.issues.filter(i => i.severity === 'critical').length;
+  const warningCount = result.issues.filter(i => i.severity === 'warning').length;
+  const theme = THEMES[result.verdict];
 
   return (
-    <div className="review-dashboard">
-      {/* Header */}
-      <div className="review-dashboard-header">
-        <button className="btn btn-secondary" onClick={onBack}>
-          ← New Document
-        </button>
-        <h2>Analysis Results</h2>
-        <div className="results-actions">
-          {onExport && (
-            <button className="btn btn-primary btn-sm" onClick={onExport}>
-              Export Report
-            </button>
-          )}
+    <div style={{ fontFamily: "'DM Sans', Arial, sans-serif", background: "#F8F9FA", minHeight: "100vh" }}>
+      {/* ── Top Bar ── */}
+      <div style={{
+        background: "#fff",
+        borderBottom: "1px solid rgba(0,0,0,0.06)",
+        padding: "0 32px",
+        height: "56px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button
+            onClick={onBack}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 500,
+              color: "#666", background: "none", border: "1px solid rgba(0,0,0,0.1)",
+              borderRadius: "9999px", padding: "6px 14px", cursor: "pointer",
+              fontFamily: "'DM Sans', Arial, sans-serif",
+            }}
+          >
+            <ArrowLeftIcon />
+            New Document
+          </button>
+          <h1 style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>Analysis Results</h1>
         </div>
+        <button
+          onClick={onExport}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600,
+            color: "#fff", background: "#000", border: "none", borderRadius: "9999px",
+            padding: "8px 18px", cursor: "pointer", fontFamily: "'DM Sans', Arial, sans-serif",
+          }}
+        >
+          <ExportIcon />
+          Export Report
+        </button>
       </div>
 
-      {/* Main Content */}
-      <div className="review-dashboard-content">
-        {/* Left Sidebar: Scorecard + Screening/Clause Map */}
-        <aside className="review-sidebar">
-          <RiskScorecard classification={classification} issues={issues} />
+      {/* ── Main Content ── */}
+      <div style={{ maxWidth: "1120px", margin: "0 auto", padding: "28px 32px 80px" }}>
 
-          {/* Show clause map if we have blocks, otherwise show screening table */}
-          {hasDocumentBlocks ? (
-            <ClauseMap
-              blocks={blocks}
-              issues={issues}
-              activeBlockId={activeBlockId}
-              onBlockClick={handleClauseMapClick}
-            />
-          ) : (
-            <div className="screening-results">
-              <h4 className="screening-title">Screening Results</h4>
-              <div className="screening-list">
-                {screening.map((item, idx) => (
-                  <div key={idx} className={`screening-item status-${item.status}`}>
-                    <span className="screening-status">
-                      {item.status === 'pass' ? '✓' : item.status === 'flag' ? '⚠' : '✕'}
-                    </span>
-                    <div className="screening-content">
-                      <span className="screening-criterion">{item.criterion}</span>
-                      <span className="screening-note">{item.note}</span>
-                    </div>
+        {/* ── Verdict Banner ── */}
+        <div className={mounted ? "fade-up" : ""} style={{
+          background: theme.bannerBg,
+          borderRadius: "16px",
+          padding: "24px 28px",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "24px",
+          gap: "24px",
+          flexWrap: "wrap",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "20px", flex: 1, minWidth: "280px" }}>
+            <div style={{
+              width: "52px", height: "52px", borderRadius: "50%",
+              background: "rgba(255,255,255,0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              {theme.icon}
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                <span style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "-0.3px" }}>
+                  {result.verdictHeadline}
+                </span>
+                <span style={{
+                  fontSize: "10px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase",
+                  background: "rgba(255,255,255,0.15)", padding: "3px 8px", borderRadius: "4px",
+                }}>
+                  {result.verdictLabel}
+                </span>
+              </div>
+              <div style={{ fontSize: "13px", opacity: 0.85, lineHeight: 1.5, maxWidth: "520px" }}>
+                {result.verdictDesc}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "20px", flexShrink: 0 }}>
+            {[
+              { n: result.issues.length, label: "Issues" },
+              { n: criticalCount, label: "Critical" },
+              { n: warningCount, label: "Warnings" },
+            ].map((s, i) => (
+              <div key={i} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "28px", fontWeight: 700, lineHeight: 1, opacity: s.n === 0 ? 0.4 : 1 }}>{s.n}</div>
+                <div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.6, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.3px" }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Two-Column Grid ── */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: hasIssues ? "1fr 380px" : "1fr",
+          gap: "20px",
+          alignItems: "start",
+        }}>
+
+          {/* ── Left Column ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Contract Summary */}
+            <div className={mounted ? "fade-up d1" : ""} style={{
+              background: "#fff", borderRadius: "14px", border: "1px solid rgba(0,0,0,0.06)", padding: "24px 28px",
+            }}>
+              <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", marginBottom: "18px" }}>
+                Contract Summary
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", rowGap: "14px", fontSize: "14px" }}>
+                {[
+                  ["Document", result.document],
+                  ["Parties", result.parties],
+                  ["Type", result.type],
+                  ["Term", result.term],
+                  ["Governing Law", result.governingLaw],
+                ].map(([label, value], i) => (
+                  <div key={i} style={{ display: "contents" }}>
+                    <span style={{ fontWeight: 500, color: "#999", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", paddingTop: "2px" }}>{label}</span>
+                    <span style={{ color: "#000", fontWeight: 500 }}>{value}</span>
                   </div>
                 ))}
               </div>
             </div>
-          )}
-        </aside>
 
-        {/* Center: Document Viewer or Contract Summary */}
-        <main className="review-main">
-          <div className="review-document-container">
-            {hasDocumentBlocks ? (
-              <>
-                <h3>Document</h3>
-                <DocumentViewer
-                  blocks={blocks}
-                  issues={issues}
-                  highlightedBlockIds={highlightedBlockIds}
-                  onBlockClick={handleBlockClick}
-                />
-              </>
-            ) : (
-              <>
-                <h3>Contract Summary</h3>
-                <div className="contract-summary">
-                  <div className="summary-item">
-                    <label>Document</label>
-                    <span>{analysisResult?.document || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <label>Parties</label>
-                    <span>{analysisResult?.parties || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <label>Type</label>
-                    <span>{analysisResult?.type || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <label>Term</label>
-                    <span>{analysisResult?.term || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <label>Governing Law</label>
-                    <span>{analysisResult?.governingLaw || 'N/A'}</span>
-                  </div>
-
-                  {/* Screening table for demo mode */}
-                  <div className="summary-screening">
-                    <h4>Screening Results</h4>
-                    <table className="screening-table">
-                      <thead>
-                        <tr>
-                          <th>Criterion</th>
-                          <th>Status</th>
-                          <th>Notes</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {screening.map((item, idx) => (
-                          <tr key={idx} className={`status-${item.status}`}>
-                            <td>{item.criterion}</td>
-                            <td className="status-cell">
-                              {item.status === 'pass' ? '✓' : item.status === 'flag' ? '⚠' : '✕'}
-                            </td>
-                            <td>{item.note}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            {/* Playbook Screening */}
+            <div className={mounted ? "fade-up d2" : ""} style={{
+              background: "#fff", borderRadius: "14px", border: "1px solid rgba(0,0,0,0.06)", padding: "24px 28px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+                <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", margin: 0 }}>
+                  Playbook Screening
+                </h3>
+                <div style={{ display: "flex", gap: "12px", fontSize: "12px", fontWeight: 500 }}>
+                  {failCount > 0 && <span style={{ color: "#DC2626" }}>{failCount} failed</span>}
+                  <span style={{ color: "#16A34A" }}>{passCount} passed</span>
                 </div>
-              </>
-            )}
-          </div>
-        </main>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {result.screening.map((s, i) => (
+                  <div key={i} style={{
+                    display: "grid", gridTemplateColumns: "20px 170px 1fr", gap: "10px",
+                    alignItems: "center", padding: "9px 0",
+                    borderBottom: i < result.screening.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                  }}>
+                    {s.status === "fail" ? <FailIcon /> : <PassIcon />}
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#000" }}>{s.criterion}</span>
+                    <span style={{ fontSize: "12px", color: "#888", lineHeight: 1.4 }}>{s.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        {/* Right Sidebar: Issues List */}
-        <aside className="review-issues">
-          <h3>Issues ({issues.length})</h3>
-          <div className="issues-list">
-            {issues.length === 0 ? (
-              <div className="no-issues">
-                <span className="no-issues-icon">✓</span>
-                <p>No issues found</p>
-                <span className="no-issues-hint">This document meets playbook standards</span>
+            {/* Recommended Next Steps */}
+            <div className={mounted ? "fade-up d3" : ""} style={{
+              background: "#fff", borderRadius: "14px", border: "1px solid rgba(0,0,0,0.06)", padding: "24px 28px",
+            }}>
+              <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", marginBottom: "16px" }}>
+                Recommended Next Steps
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {result.nextSteps.map((step, i) => (
+                  <div key={i} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                    <div style={{
+                      width: "22px", height: "22px", borderRadius: "6px", background: "#000",
+                      color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "11px", fontWeight: 700, flexShrink: 0,
+                    }}>{i + 1}</div>
+                    <span style={{ fontSize: "14px", color: "#333", lineHeight: 1.5, paddingTop: "1px" }}>{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Disclaimer */}
+            <div style={{
+              fontSize: "12px", color: "#999", lineHeight: 1.5, padding: "0 4px",
+            }}>
+              This analysis assists with legal workflows but does not constitute legal advice. All findings should be reviewed by qualified legal professionals.
+            </div>
+          </div>
+
+          {/* ── Right Column — Issues Panel ── */}
+          <div className={mounted ? "fade-up d2" : ""} style={{
+            position: hasIssues ? "sticky" : "static",
+            top: "76px",
+            maxHeight: hasIssues ? "calc(100vh - 100px)" : "auto",
+            overflowY: hasIssues ? "auto" : "visible",
+          }}>
+            {/* Header */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: "12px", padding: "0 2px",
+            }}>
+              <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", margin: 0 }}>
+                Issues ({result.issues.length})
+              </h3>
+              {criticalCount > 0 && (
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.3px" }}>
+                  {criticalCount === result.issues.length ? "All Critical" : `${criticalCount} Critical`}
+                </span>
+              )}
+            </div>
+
+            {/* Issue cards or empty state */}
+            {hasIssues ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {result.issues.map((issue, i) => (
+                  <IssueCard
+                    key={i}
+                    issue={issue}
+                    isOpen={openIssue === i}
+                    onToggle={() => setOpenIssue(openIssue === i ? -1 : i)}
+                  />
+                ))}
               </div>
             ) : (
-              issues.map((issue, idx) => (
-                <IssueCard
-                  key={issue.id || idx}
-                  issue={issue}
-                  isExpanded={expandedIssueId === (issue.id || idx)}
-                  onToggle={() => handleToggleIssue(issue.id || idx)}
-                  onViewInDocument={hasDocumentBlocks ? handleViewInDocument : null}
-                />
-              ))
+              <div style={{
+                background: "#fff", borderRadius: "14px", border: "1px solid rgba(0,0,0,0.06)",
+                padding: "48px 24px", textAlign: "center",
+              }}>
+                <div style={{
+                  width: "56px", height: "56px", borderRadius: "50%", background: "rgba(22, 163, 74, 0.08)",
+                  display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px",
+                }}>
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <path d="M7 15l4.5 4.5L21 9" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div style={{ fontSize: "15px", fontWeight: 600, color: "#000", marginBottom: "6px" }}>No issues found</div>
+                <div style={{ fontSize: "13px", color: "#888", lineHeight: 1.5 }}>This document meets all playbook standards</div>
+              </div>
             )}
           </div>
-        </aside>
-      </div>
-
-      {/* Footer with recommendation and next steps */}
-      <div className="review-dashboard-footer">
-        <div className="footer-recommendation">
-          <h4>Recommendation</h4>
-          <p>{analysisResult?.recommendation || 'Review the analysis above.'}</p>
         </div>
-
-        {analysisResult?.nextSteps?.length > 0 && (
-          <div className="footer-next-steps">
-            <h4>Next Steps</h4>
-            <ol>
-              {analysisResult.nextSteps.map((step, idx) => (
-                <li key={idx}>{step}</li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {/* Generate Redline CTA - only show if there are issues with edit plans */}
-        {issues.some(i => i.editPlans?.length > 0) && (
-          <div className="generate-redline-cta">
-            <div>
-              <h4>Ready to Generate Redline?</h4>
-              <p>Select which changes to include and export a marked-up document.</p>
-            </div>
-            <button className="btn" disabled>
-              Coming Soon
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

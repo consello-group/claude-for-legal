@@ -662,6 +662,11 @@ body {
 .delay-3 { animation-delay: 0.24s; }
 .delay-4 { animation-delay: 0.32s; }
 
+/* Results page stagger delays */
+.d1 { animation-delay: 0.05s; }
+.d2 { animation-delay: 0.1s; }
+.d3 { animation-delay: 0.15s; }
+
 /* Modal animations */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(6px); }
