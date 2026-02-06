@@ -566,6 +566,7 @@ export default function Home() {
         </div>
         <nav className="nav">
           <Link href="/" className="nav-btn active">Analyze</Link>
+          <Link href="/playbook" className="nav-btn">Playbook</Link>
           <Link href="/about" className="nav-btn">About</Link>
         </nav>
         <div className="header-actions">

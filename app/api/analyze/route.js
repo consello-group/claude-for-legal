@@ -1,85 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
+import { toPromptString } from '../../lib/playbook';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const LEGAL_PLAYBOOK = `
-## Contract Review Positions
-
-### Limitation of Liability
-- **Standard position**: Mutual cap at 12 months of fees paid or payable
-- **Acceptable range**: 6-24 months of fees
-- **Escalation trigger**: Uncapped liability, inclusion of consequential damages, or unilateral caps
-
-### Indemnification
-- **Standard position**: Mutual indemnification for IP infringement and data breach
-- **Acceptable**: Indemnification limited to third-party claims only
-- **Escalation trigger**: Unilateral indemnification obligations, unlimited indemnity
-
-### IP Ownership
-- **Standard position**: Each party retains pre-existing IP; customer owns customer data
-- **Escalation trigger**: Broad IP assignment clauses, work-for-hire provisions
-
-### Confidentiality
-- **Standard position**: Mutual confidentiality with standard carveouts
-- **Term**: 2-3 years standard, up to 5 years for trade secrets
-- **Required carveouts**: Independently developed, publicly available, rightfully received, required by law, prior possession
-- **Escalation trigger**: Perpetual obligations, missing critical carveouts
-
-### Term and Termination
-- **Standard position**: Annual term with 30-day termination for convenience
-- **Escalation trigger**: No termination for convenience, excessive early termination penalties
-
-### Governing Law
-- **Preferred**: New York, Delaware
-- **Acceptable**: California, England & Wales
-- **Escalation trigger**: Non-standard jurisdictions, mandatory arbitration
-
-## NDA Screening Criteria
-
-### Structure
-- **Required**: Mutual obligations for exploratory discussions
-- **Acceptable**: Unilateral only when one party is disclosing
-
-### Term
-- **Standard**: 2-3 years for agreement term
-- **Survival**: 2-5 years from disclosure
-- **Escalation trigger**: Terms exceeding 5 years or perpetual
-
-### Required Carveouts (ALL must be present)
-1. Information already publicly available
-2. Information independently developed
-3. Information rightfully received from third parties
-4. Disclosure required by law (with notice where permitted)
-5. Prior possession
-
-### Prohibited Provisions (trigger RED)
-- Non-compete clauses
-- Non-solicitation of employees
-- Exclusivity provisions
-- Broad residuals clauses
-- IP assignment or licensing
-- Audit rights
-
-## Risk Classification
-
-### GREEN - Standard Approval
-- All standard positions met
-- No escalation triggers
-- Approve via delegation
-
-### YELLOW - Counsel Review
-- Minor deviations within acceptable ranges
-- 1-2 negotiable issues
-- Route to designated reviewer
-
-### RED - Escalate
-- Outside acceptable ranges
-- Escalation triggers present
-- Requires senior counsel
-`;
+const LEGAL_PLAYBOOK = toPromptString();
 
 const BLOCK_REFERENCE_INSTRUCTIONS = `
 If the document has block IDs in the format [BLOCK:uuid]content[/BLOCK], reference them in sourceBlockIds.

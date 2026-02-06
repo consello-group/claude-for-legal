@@ -2675,3 +2675,483 @@ h6.document-heading { font-size: 0.875rem; }
     padding: var(--space-xs) 0;
     color: var(--consello-black);
 }
+
+/* ============================================
+   PLAYBOOK PAGE
+   ============================================ */
+
+.playbook-hero {
+    background: var(--consello-black);
+    color: var(--consello-white);
+    padding: 80px 24px 60px;
+    text-align: center;
+}
+
+.playbook-hero-content {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.playbook-hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+}
+
+.playbook-hero .section-label {
+    color: var(--consello-terracotta);
+    margin-bottom: 12px;
+}
+
+.playbook-hero-subtitle {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.playbook-main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+.playbook-section {
+    margin-bottom: 64px;
+}
+
+.playbook-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 8px;
+}
+
+.playbook-section-intro {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-bottom: 28px;
+}
+
+/* Clause Cards Grid */
+.playbook-clause-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.playbook-clause-card {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.playbook-clause-card:hover {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.playbook-clause-card.open {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.playbook-clause-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-primary);
+    text-align: left;
+    color: var(--consello-black);
+}
+
+.playbook-clause-header:hover {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.playbook-clause-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.playbook-clause-title-row h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.playbook-badges {
+    display: flex;
+    gap: 6px;
+}
+
+.playbook-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.playbook-clause-body {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeInUp 0.2s ease;
+}
+
+/* Tier rows */
+.playbook-tier {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.playbook-tier-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.playbook-tier p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    margin: 0;
+}
+
+.playbook-tier-green {
+    background: rgba(46, 125, 50, 0.04);
+    border-left-color: var(--color-green);
+}
+
+.playbook-tier-green .playbook-tier-label {
+    color: var(--color-green);
+}
+
+.playbook-tier-yellow {
+    background: rgba(249, 168, 37, 0.06);
+    border-left-color: var(--color-yellow);
+}
+
+.playbook-tier-yellow .playbook-tier-label {
+    color: #F57F17;
+}
+
+.playbook-tier-red {
+    background: rgba(198, 40, 40, 0.04);
+    border-left-color: var(--color-red);
+}
+
+.playbook-tier-red .playbook-tier-label {
+    color: var(--color-red);
+}
+
+/* Threshold Bar */
+.threshold-bar-container {
+    margin-top: 8px;
+    padding: 0 4px;
+}
+
+.threshold-bar {
+    position: relative;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f0f0f0;
+}
+
+.threshold-zone {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+
+.threshold-green {
+    background: rgba(46, 125, 50, 0.2);
+}
+
+.threshold-red {
+    background: rgba(198, 40, 40, 0.12);
+}
+
+.threshold-marker {
+    position: absolute;
+    top: -2px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+}
+
+.threshold-marker-line {
+    width: 2px;
+    height: 16px;
+    background: var(--consello-black);
+    border-radius: 1px;
+}
+
+.threshold-marker-label {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--consello-black);
+    white-space: nowrap;
+}
+
+.threshold-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #999;
+}
+
+.threshold-label-std {
+    font-weight: 600;
+    color: #666;
+}
+
+/* NDA Screening Cards */
+.playbook-screening-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.playbook-screening-card {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.playbook-screening-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #333;
+}
+
+.playbook-screening-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.playbook-screening-card li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.playbook-screening-card li strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--consello-black);
+}
+
+.playbook-screening-card li span {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Classification Cards */
+.playbook-classification-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.playbook-classification-card {
+    border: 1px solid;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.playbook-classification-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.playbook-classification-icon {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.playbook-classification-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.playbook-classification-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.playbook-classification-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.playbook-classification-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.playbook-classification-meta .meta-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #999;
+}
+
+.playbook-classification-meta .meta-value {
+    display: block;
+    font-size: 13px;
+    color: #333;
+    margin-top: 2px;
+}
+
+/* Routing Table */
+.playbook-routing-table-wrap {
+    overflow-x: auto;
+}
+
+.playbook-routing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.playbook-routing-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.playbook-routing-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    color: #333;
+}
+
+.playbook-routing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid;
+    letter-spacing: 0.3px;
+}
+
+/* Customization Callout */
+.playbook-customization-callout {
+    background: rgba(166, 74, 48, 0.03);
+    border: 1px solid rgba(166, 74, 48, 0.12);
+    border-radius: 12px;
+    padding: 32px;
+}
+
+.playbook-customization-callout h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.playbook-customization-callout p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 12px;
+}
+
+.playbook-customization-callout p:last-child {
+    margin-bottom: 0;
+}
+
+.playbook-callout-detail {
+    font-size: 13px !important;
+    color: #666 !important;
+}
+
+.playbook-callout-detail a {
+    color: var(--consello-terracotta);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.playbook-callout-detail a:hover {
+    color: #8B3A24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .playbook-hero {
+        padding: 60px 20px 48px;
+    }
+
+    .playbook-hero h1 {
+        font-size: 28px;
+    }
+
+    .playbook-classification-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .playbook-screening-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .playbook-clause-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

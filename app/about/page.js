@@ -19,6 +19,7 @@ export default function AboutPage() {
         </div>
         <nav className="nav">
           <Link href="/" className="nav-btn">Analyze</Link>
+          <Link href="/playbook" className="nav-btn">Playbook</Link>
           <Link href="/about" className="nav-btn active">About</Link>
         </nav>
         <div className="header-actions"></div>
@@ -149,7 +150,7 @@ export default function AboutPage() {
             <div className="step">
               <div className="step-number">1</div>
               <h3>Upload Document</h3>
-              <p>Drop your NDA or contract into the analyzer. Supports TXT files with PDF support coming soon.</p>
+              <p>Drop your NDA or contract into the analyzer. Supports PDF, DOCX, and TXT files.</p>
             </div>
             <div className="step-arrow">→</div>
             <div className="step">
@@ -286,16 +287,16 @@ export default function AboutPage() {
             <div className="roadmap-card">
               <div className="roadmap-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
               </div>
-              <h3>PDF Processing</h3>
+              <h3>Redline Generation</h3>
               <p>
-                Direct analysis of PDF documents with automatic text extraction,
-                eliminating the need to convert files before upload.
+                Auto-generate Word documents with Track Changes for each flagged issue,
+                with preferred and fallback redline variants per clause.
               </p>
-              <span className="roadmap-tag">Ready to Build</span>
+              <span className="roadmap-tag">Next Release</span>
             </div>
 
             <div className="roadmap-card">
@@ -320,12 +321,12 @@ export default function AboutPage() {
           <div className="section-label">Technology</div>
           <h2>Built on Claude</h2>
           <p className="tech-intro">
-            Powered by Anthropic's Claude Opus 4, the most capable AI model for complex
-            reasoning and nuanced analysis. Claude excels at understanding legal language,
+            Powered by Anthropic's Claude Sonnet 4, optimized for speed and accuracy in
+            legal document analysis. Claude excels at understanding legal language,
             identifying subtle issues, and providing actionable recommendations.
           </p>
           <div className="tech-badges">
-            <span className="tech-badge">Claude Opus 4</span>
+            <span className="tech-badge">Claude Sonnet 4</span>
             <span className="tech-badge">Anthropic API</span>
             <span className="tech-badge">Next.js</span>
             <span className="tech-badge">Vercel</span>
