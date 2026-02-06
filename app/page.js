@@ -542,28 +542,40 @@ export default function Home() {
             </div>
 
             {!currentDocument ? (
-              <div
-                className="upload-zone"
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => document.getElementById('file-input').click()}
-              >
-                <input
-                  id="file-input"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                  style={{ display: 'none' }}
-                />
-                <div className="upload-icon">
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                    <path d="M24 4L12 16h8v12h8V16h8L24 4z" fill="currentColor" opacity="0.3"/>
-                    <path d="M8 32v8h32v-8" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  </svg>
+              <>
+                <div
+                  className="upload-zone"
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => document.getElementById('file-input').click()}
+                >
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={(e) => handleFileUpload(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                  <div className="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                      <path d="M24 4L12 16h8v12h8V16h8L24 4z" fill="currentColor" opacity="0.3"/>
+                      <path d="M8 32v8h32v-8" stroke="currentColor" strokeWidth="2" fill="none"/>
+                    </svg>
+                  </div>
+                  <p>Drag & drop or click to upload</p>
+                  <span className="upload-hint">PDF, DOCX, or TXT</span>
                 </div>
-                <p>Drag & drop or click to upload</p>
-                <span className="upload-hint">PDF, DOCX, or TXT</span>
-              </div>
+                <div className="sample-docs-hint">
+                  <span>or try a sample:</span>
+                  <button className="sample-link" onClick={(e) => { e.stopPropagation(); loadSampleNDA('standard'); }}>
+                    Standard NDA
+                  </button>
+                  <span className="sample-divider">·</span>
+                  <button className="sample-link" onClick={(e) => { e.stopPropagation(); loadSampleNDA('problematic'); }}>
+                    Problematic NDA
+                  </button>
+                </div>
+              </>
             ) : (
               <div className="document-preview">
                 <div className="document-header">
@@ -617,43 +629,6 @@ export default function Home() {
             </button>
 
             {error && <p className="error-text" style={{ marginTop: '1rem', textAlign: 'center' }}>{error}</p>}
-          </div>
-
-          {/* Sample Documents */}
-          <div className="panel" style={{ marginBottom: '2rem' }}>
-            <div className="panel-header">
-              <h2>Or Try a Sample</h2>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', padding: '1rem' }}>
-              <button className="btn btn-secondary" onClick={() => loadSampleNDA('standard')} style={{ flex: 1 }}>
-                Standard NDA
-              </button>
-              <button className="btn btn-secondary" onClick={() => loadSampleNDA('problematic')} style={{ flex: 1 }}>
-                Problematic NDA
-              </button>
-            </div>
-          </div>
-
-          {/* Demo Buttons */}
-          <div className="panel">
-            <div className="panel-header">
-              <h2>Quick Demos</h2>
-              <span style={{ fontSize: '0.875rem', color: '#666' }}>See example results instantly</span>
-            </div>
-            <div className="demo-buttons" style={{ padding: '1rem' }}>
-              <button className="demo-btn green" onClick={() => runDemo('green')}>
-                <span className="demo-indicator"></span>
-                GREEN Demo
-              </button>
-              <button className="demo-btn yellow" onClick={() => runDemo('yellow')}>
-                <span className="demo-indicator"></span>
-                YELLOW Demo
-              </button>
-              <button className="demo-btn red" onClick={() => runDemo('red')}>
-                <span className="demo-indicator"></span>
-                RED Demo
-              </button>
-            </div>
           </div>
         </div>
       </main>
