@@ -273,9 +273,38 @@ export default function Home() {
       } finally {
         setIsParsing(false);
       }
+    } else if (ext === '.pdf') {
+      // Parse PDF using our new endpoint
+      setIsParsing(true);
+      try {
+        const buffer = await file.arrayBuffer();
+        const res = await fetch(`/api/parse-pdf?filename=${encodeURIComponent(file.name)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'x-app-password': password,
+          },
+          body: buffer,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to parse PDF');
+        }
+
+        // Store both the parsed document and the plain text content
+        setParsedDocument(data.document);
+        setDocumentContent(data.document.fullText);
+      } catch (err) {
+        setError(`PDF parsing failed: ${err.message}`);
+        setDocumentContent(`[PDF parsing error - ${err.message}]`);
+      } finally {
+        setIsParsing(false);
+      }
     } else {
-      // PDF and DOC files - placeholder for now
-      setDocumentContent(`[${ext.toUpperCase()} file uploaded - PDF/DOC parsing coming soon]`);
+      // DOC files - placeholder for now
+      setDocumentContent(`[${ext.toUpperCase()} file uploaded - DOC parsing coming soon]`);
     }
   }, [password]);
 

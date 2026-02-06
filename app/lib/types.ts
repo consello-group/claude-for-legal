@@ -50,7 +50,8 @@ export interface ParsedDocument {
     wordCount: number;
     blockCount: number;
     hasTablesOrLists: boolean;
-    parseDate: string;
+    parseDate?: string;
+    pageCount?: number;
   };
 }
 
