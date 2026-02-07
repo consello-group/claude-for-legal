@@ -25,6 +25,19 @@ const ExportIcon = () => (
   </svg>
 );
 
+const WordDocIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M5 5l1.5 6L8 7.5 9.5 11 11 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SpinnerIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ animation: "spin 1s linear infinite" }}>
+    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="8" strokeLinecap="round" />
+  </svg>
+);
+
 const ArrowLeftIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -40,6 +53,15 @@ const THEMES = {
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M12 2L2 20h20L12 2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
         <path d="M12 9v4M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  yellow: {
+    bannerBg: "#92400E",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#fff" strokeWidth="2" />
+        <path d="M12 8v5M12 16v1" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -81,7 +103,7 @@ function deriveResultData(analysisResult) {
   }));
 
   // Determine verdict
-  const verdict = classification === 'red' ? 'red' : 'green';
+  const verdict = classification === 'red' ? 'red' : classification === 'yellow' ? 'yellow' : 'green';
 
   // Derive headline, label, description
   let verdictHeadline, verdictLabel, verdictDesc;
@@ -123,13 +145,25 @@ export default function ReviewDashboard({
   analysisResult,
   onBack,
   onExport,
+  onExportRedline,
+  isExportingRedline = false,
+  redlineDecisions = {},
+  onDecisionChange,
+  onSelectAll,
 }) {
-  const [openIssue, setOpenIssue] = useState(0);
+  const [openIssueId, setOpenIssueId] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [severityFilter, setSeverityFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('severity');
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    // Auto-open first issue on mount
+    const firstIssue = result.issues[0];
+    if (firstIssue) {
+      setOpenIssueId(firstIssue._original?.id || 'issue-0');
+    }
+  }, []);
 
   const result = deriveResultData(analysisResult);
 
@@ -139,6 +173,19 @@ export default function ReviewDashboard({
   const criticalCount = result.issues.filter(i => i.severity === 'critical').length;
   const warningCount = result.issues.filter(i => i.severity === 'warning').length;
   const theme = THEMES[result.verdict];
+
+  // Redline selection counts (scoped to filtered view)
+  const visibleEditableIds = filteredIssues
+    .filter(i => i._original?.editPlans?.length > 0)
+    .map(i => i._original?.id)
+    .filter(Boolean);
+  const totalEditable = visibleEditableIds.length;
+  const selectedCount = visibleEditableIds.filter(id => redlineDecisions[id]?.apply).length;
+  const allSelected = selectedCount === totalEditable && totalEditable > 0;
+  // Global counts for button label and state
+  const globalSelectedCount = Object.values(redlineDecisions).filter(d => d.apply).length;
+  const globalEditableCount = Object.keys(redlineDecisions).length;
+  const redlineDisabled = isExportingRedline || (globalEditableCount > 0 && globalSelectedCount === 0);
 
   // Filtered and sorted issues for display
   const filteredIssues = severityFilter === 'all'
@@ -178,17 +225,37 @@ export default function ReviewDashboard({
           </button>
           <h1 style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>Analysis Results</h1>
         </div>
-        <button
-          onClick={onExport}
-          style={{
-            display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600,
-            color: "#fff", background: "#000", border: "none", borderRadius: "9999px",
-            padding: "8px 18px", cursor: "pointer", fontFamily: "'DM Sans', Arial, sans-serif",
-          }}
-        >
-          <ExportIcon />
-          Export Report
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={onExportRedline}
+            disabled={redlineDisabled}
+            title={redlineDisabled && !isExportingRedline ? "Select issues to include in redline" : ""}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600,
+              color: "#fff", background: redlineDisabled ? "#c4836e" : "#A64A30", border: "none",
+              borderRadius: "9999px", padding: "8px 18px",
+              cursor: redlineDisabled ? "default" : "pointer",
+              fontFamily: "'DM Sans', Arial, sans-serif",
+              opacity: redlineDisabled ? 0.5 : 1,
+              transition: "all 0.15s ease",
+            }}
+          >
+            {isExportingRedline ? <SpinnerIcon /> : <WordDocIcon />}
+            {isExportingRedline ? "Generating..." : globalSelectedCount > 0 ? `Download Redline (${globalSelectedCount})` : "Download Redline"}
+          </button>
+          <button
+            onClick={onExport}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600,
+              color: "#333", background: "none", border: "1px solid rgba(0,0,0,0.15)",
+              borderRadius: "9999px", padding: "8px 18px", cursor: "pointer",
+              fontFamily: "'DM Sans', Arial, sans-serif",
+            }}
+          >
+            <ExportIcon />
+            Export Report
+          </button>
+        </div>
       </div>
 
       {/* ── Main Content ── */}
@@ -360,17 +427,17 @@ export default function ReviewDashboard({
               )}
             </div>
 
-            {/* Filter buttons */}
-            {hasIssues && result.issues.length > 1 && (
-              <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-                {[
+            {/* Filter + Select All controls */}
+            {hasIssues && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px", flexWrap: "wrap" }}>
+                {result.issues.length > 1 && [
                   { key: 'all', label: `All (${result.issues.length})` },
                   ...(criticalCount > 0 ? [{ key: 'critical', label: `Critical (${criticalCount})` }] : []),
                   ...(warningCount > 0 ? [{ key: 'warning', label: `Warning (${warningCount})` }] : []),
                 ].map(f => (
                   <button
                     key={f.key}
-                    onClick={() => { setSeverityFilter(f.key); setOpenIssue(0); }}
+                    onClick={() => { setSeverityFilter(f.key); setOpenIssueId(null); }}
                     style={{
                       fontSize: "11px", fontWeight: 600, padding: "5px 12px", borderRadius: "9999px",
                       border: severityFilter === f.key ? "1px solid #000" : "1px solid rgba(0,0,0,0.1)",
@@ -381,20 +448,46 @@ export default function ReviewDashboard({
                     }}
                   >{f.label}</button>
                 ))}
+                {totalEditable > 0 && (
+                  <>
+                    <div style={{ width: "1px", height: "16px", background: "rgba(0,0,0,0.08)", margin: "0 4px" }} />
+                    <button
+                      onClick={() => {
+                        const visibleIds = sortedIssues
+                          .filter(i => i._original?.editPlans?.length > 0)
+                          .map(i => i._original?.id)
+                          .filter(Boolean);
+                        onSelectAll?.(!allSelected, visibleIds);
+                      }}
+                      style={{
+                        fontSize: "11px", fontWeight: 500, padding: "5px 12px", borderRadius: "9999px",
+                        border: "1px solid rgba(166,74,48,0.15)", background: "rgba(166,74,48,0.04)",
+                        color: "#A64A30", cursor: "pointer", fontFamily: "'DM Sans', Arial, sans-serif",
+                        transition: "all 0.15s ease",
+                      }}
+                    >{allSelected ? "Deselect All" : "Select All"}</button>
+                    <span style={{ fontSize: "11px", color: "#999" }}>{selectedCount}/{totalEditable}</span>
+                  </>
+                )}
               </div>
             )}
 
             {/* Issue cards or empty state */}
             {hasIssues ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {sortedIssues.map((issue, i) => (
-                  <IssueCard
-                    key={issue._original?.id || i}
-                    issue={issue}
-                    isOpen={openIssue === i}
-                    onToggle={() => setOpenIssue(openIssue === i ? -1 : i)}
-                  />
-                ))}
+                {sortedIssues.map((issue, i) => {
+                  const issueId = issue._original?.id || `issue-${i}`;
+                  return (
+                    <IssueCard
+                      key={issueId}
+                      issue={issue}
+                      isOpen={openIssueId === issueId}
+                      onToggle={() => setOpenIssueId(openIssueId === issueId ? null : issueId)}
+                      decision={redlineDecisions[issueId]}
+                      onDecisionChange={(changes) => onDecisionChange?.(issueId, changes)}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div style={{

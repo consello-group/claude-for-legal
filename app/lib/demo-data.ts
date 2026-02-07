@@ -121,7 +121,25 @@ export const DEMO_DATA: Record<string, any> = {
         risk: 'We cannot share any information requiring protection. Completely one-sided.',
         recommendation: 'Require conversion to mutual NDA or reject.',
         sourceBlockIds: [],
-        sourceQuote: '',
+        sourceQuote: 'The Receiving Party agrees to hold in confidence all Confidential Information',
+        editPlans: [
+          {
+            variant: 'preferred' as const,
+            description: 'Convert to mutual confidentiality obligations',
+            operations: [
+              {
+                id: 'edit-1a',
+                type: 'replace_range' as const,
+                blockId: 'demo-block-1',
+                startChar: 0,
+                endChar: 45,
+                newText: 'Each Party (as "Receiving Party") agrees to hold in confidence all Confidential Information disclosed by the other Party (as "Disclosing Party")',
+                comment: 'Converted to mutual NDA structure per Consello playbook',
+                issueId: 'issue-1',
+              },
+            ],
+          },
+        ],
       },
       {
         id: 'issue-2',
@@ -132,6 +150,22 @@ export const DEMO_DATA: Record<string, any> = {
         recommendation: 'MUST ADD standard independent development carveout. Non-negotiable.',
         sourceBlockIds: [],
         sourceQuote: '',
+        editPlans: [
+          {
+            variant: 'preferred' as const,
+            description: 'Add standard independent development carveout to exclusions',
+            operations: [
+              {
+                id: 'edit-2a',
+                type: 'insert_after' as const,
+                blockId: 'demo-block-2',
+                newText: '(e) information that is independently developed by the Receiving Party without reference to or use of the Disclosing Party\'s Confidential Information, as demonstrated by written records;',
+                comment: 'Added required independent development carveout per Consello playbook',
+                issueId: 'issue-2',
+              },
+            ],
+          },
+        ],
       },
       {
         id: 'issue-3',
@@ -141,7 +175,24 @@ export const DEMO_DATA: Record<string, any> = {
         risk: 'Could prevent legitimate business activities and client relationships.',
         recommendation: 'DELETE ENTIRELY. Non-competes are prohibited in NDAs per playbook.',
         sourceBlockIds: [],
-        sourceQuote: '',
+        sourceQuote: 'Receiving Party shall not, for a period of two (2) years, directly or indirectly compete',
+        editPlans: [
+          {
+            variant: 'preferred' as const,
+            description: 'Delete non-compete clause entirely — prohibited per playbook',
+            operations: [
+              {
+                id: 'edit-3a',
+                type: 'delete_range' as const,
+                blockId: 'demo-block-3',
+                startChar: 0,
+                endChar: 200,
+                comment: 'Non-compete clauses are prohibited in NDAs per Consello playbook',
+                issueId: 'issue-3',
+              },
+            ],
+          },
+        ],
       },
     ],
     recommendation: 'DO NOT SIGN. This NDA contains multiple provisions that violate playbook standards and create unacceptable risk. Escalate to senior counsel and provide counterparty with our standard mutual NDA template.',

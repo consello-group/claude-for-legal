@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ReviewDashboard from './components/ReviewDashboard';
@@ -33,6 +33,11 @@ export default function Home() {
   const [analysisPhase, setAnalysisPhase] = useState('parse');
   const [notContractInfo, setNotContractInfo] = useState(null);
   const [streamProgress, setStreamProgress] = useState(0);
+  const [isExportingRedline, setIsExportingRedline] = useState(false);
+  const [redlineDecisions, setRedlineDecisions] = useState({});
+
+  // Abort controller for analysis cancellation
+  const analysisAbortRef = useRef(null);
 
   // New UI state
   const [selectedFile, setSelectedFile] = useState(null);
@@ -202,6 +207,17 @@ export default function Home() {
     }
   };
 
+  // Initialize redline decisions from analysis issues
+  const initRedlineDecisions = (issues) => {
+    const decisions = {};
+    for (const issue of (issues || [])) {
+      if (issue.editPlans && issue.editPlans.length > 0) {
+        decisions[issue.id] = { apply: true, variant: 'preferred', includeComment: true };
+      }
+    }
+    setRedlineDecisions(decisions);
+  };
+
   // Clear document and start fresh
   const startNewDocument = () => {
     setSelectedFile(null);
@@ -214,11 +230,14 @@ export default function Home() {
     setViewMode('input');
     setNotContractInfo(null);
     setStreamProgress(0);
+    setRedlineDecisions({});
   };
 
   // Run demo (no API call)
   const runDemo = (type) => {
-    setResults(DEMO_DATA[type]);
+    const demoResult = DEMO_DATA[type];
+    setResults(demoResult);
+    initRedlineDecisions(demoResult?.issues);
     setViewMode('results');
   };
 
@@ -233,6 +252,9 @@ export default function Home() {
     setAnalysisPhase('parse');
     setStreamProgress(0);
     setError('');
+
+    const abortController = new AbortController();
+    analysisAbortRef.current = abortController;
 
     try {
       setAnalysisPhase('analyze');
@@ -249,6 +271,7 @@ export default function Home() {
           document: docContent,
           filename: currentDocument?.name,
         }),
+        signal: abortController.signal,
       });
 
       // Check if response is SSE stream
@@ -301,10 +324,12 @@ export default function Home() {
         }
 
         setStreamProgress(100);
-        setResults({
+        const sseResults = {
           ...finalResult.analysis,
           rawAnalysis: finalResult.rawAnalysis || JSON.stringify(finalResult.analysis, null, 2),
-        });
+        };
+        setResults(sseResults);
+        initRedlineDecisions(finalResult.analysis?.issues);
         setViewMode('results');
       } else {
         // Standard JSON response (fallback)
@@ -329,16 +354,20 @@ export default function Home() {
         setAnalysisPhase('recommend');
         await new Promise(r => setTimeout(r, 300));
 
-        setResults({
+        const jsonResults = {
           ...data.analysis,
           rawAnalysis: data.rawAnalysis || JSON.stringify(data.analysis, null, 2),
-        });
+        };
+        setResults(jsonResults);
+        initRedlineDecisions(data.analysis?.issues);
         setViewMode('results');
       }
     } catch (err) {
+      if (err.name === 'AbortError') return; // User cancelled
       setError(err.message);
     } finally {
       setIsAnalyzing(false);
+      analysisAbortRef.current = null;
     }
   };
 
@@ -353,6 +382,67 @@ export default function Home() {
     a.download = `legal-analysis-${new Date().toISOString().slice(0, 10)}.html`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Export redline DOCX
+  const exportRedline = async () => {
+    if (!results) return;
+    setIsExportingRedline(true);
+    setError('');
+
+    try {
+      // Collect edit operations based on user selections
+      const selectedEdits = [];
+      for (const issue of (results.issues || [])) {
+        if (!issue.editPlans || issue.editPlans.length === 0) continue;
+        const decision = redlineDecisions[issue.id];
+        if (!decision?.apply) continue;
+        const variantName = decision.variant || 'preferred';
+        const plan = issue.editPlans.find(p => p.variant === variantName) || issue.editPlans[0];
+        for (const op of plan.operations) {
+          selectedEdits.push(op);
+        }
+      }
+
+      const filename = currentDocument?.name
+        ? currentDocument.name.replace(/\.[^.]+$/, '') + '-redline.docx'
+        : 'document-redline.docx';
+
+      const res = await fetch('/api/export-redline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-password': password,
+        },
+        body: JSON.stringify({
+          parsedDocument: parsedDocument || null,
+          analysisResult: results,
+          selectedEdits,
+          options: {
+            author: 'Consello Legal AI',
+            includeComments: true,
+            filename,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Export failed');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(`Redline export failed: ${err.message}`);
+    } finally {
+      setIsExportingRedline(false);
+    }
   };
 
   // Login screen
@@ -388,6 +478,27 @@ export default function Home() {
         analysisResult={results}
         onBack={startNewDocument}
         onExport={exportReport}
+        onExportRedline={exportRedline}
+        isExportingRedline={isExportingRedline}
+        redlineDecisions={redlineDecisions}
+        onDecisionChange={(issueId, patch) => {
+          setRedlineDecisions(prev => ({
+            ...prev,
+            [issueId]: { ...prev[issueId], ...patch },
+          }));
+        }}
+        onSelectAll={(selectAll, scopedIds) => {
+          setRedlineDecisions(prev => {
+            const next = { ...prev };
+            const idsToUpdate = scopedIds || Object.keys(next);
+            for (const key of idsToUpdate) {
+              if (next[key]) {
+                next[key] = { ...next[key], apply: selectAll };
+              }
+            }
+            return next;
+          });
+        }}
       />
     );
   }
@@ -403,7 +514,10 @@ export default function Home() {
           ...parsedDocument.metadata,
           filename: currentDocument?.name,
         } : null}
-        onCancel={() => setIsAnalyzing(false)}
+        onCancel={() => {
+          analysisAbortRef.current?.abort();
+          setIsAnalyzing(false);
+        }}
       />
 
       <header className="header">

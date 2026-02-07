@@ -9,8 +9,34 @@ const anthropic = new Anthropic({
 const LEGAL_PLAYBOOK = toPromptString();
 
 const BLOCK_REFERENCE_INSTRUCTIONS = `
-If the document has block IDs in the format [BLOCK:uuid]content[/BLOCK], reference them in sourceBlockIds.
-Include a short sourceQuote (max 150 chars) from the problematic text.
+If the document has block IDs in the format [BLOCK:uuid]content[/BLOCK]:
+1. Reference the specific block IDs in "sourceBlockIds"
+2. Include a short sourceQuote (max 150 chars) from the problematic text
+3. For each YELLOW or RED issue, include "editPlans" with specific text changes referencing blockIds and character offsets within the block content.
+
+editPlans example:
+"editPlans": [
+  {
+    "variant": "preferred",
+    "description": "Why this change is recommended",
+    "operations": [
+      {
+        "id": "edit-1",
+        "type": "replace_range",
+        "blockId": "the-block-uuid",
+        "startChar": 25,
+        "endChar": 52,
+        "newText": "replacement text from playbook standard",
+        "comment": "Brief explanation for Word comment",
+        "issueId": "issue-1"
+      }
+    ]
+  }
+]
+
+Operation types: "replace_range" (replace text at startChar-endChar with newText), "delete_range" (remove text at startChar-endChar), "insert_after" (add newText after the block).
+Use the playbook standard positions for replacement text. Character offsets are 0-based within the block content string.
+If no block IDs are present in the document, omit editPlans.
 `;
 
 // ============================================
@@ -68,7 +94,8 @@ Analyze the document and return a JSON object with this EXACT structure:
       "risk": "Business risk",
       "recommendation": "Action to take",
       "sourceBlockIds": [],
-      "sourceQuote": "Quote (max 150 chars)"
+      "sourceQuote": "Quote (max 150 chars)",
+      "editPlans": []
     }
   ],
   "recommendation": "Overall recommendation",
@@ -148,7 +175,7 @@ Return ONLY valid JSON as specified in the system prompt. First determine if thi
     // Use streaming to provide real-time progress
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 6144,
       messages: [
         {
           role: 'user',
@@ -168,7 +195,7 @@ Return ONLY valid JSON as specified in the system prompt. First determine if thi
 
         let fullText = '';
         let tokenCount = 0;
-        const estimatedTokens = 2500; // Rough estimate for progress bar
+        const estimatedTokens = 3500; // Rough estimate for progress bar (includes editPlans)
 
         try {
           stream.on('text', (text) => {
