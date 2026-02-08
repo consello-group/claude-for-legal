@@ -3,6 +3,61 @@
  * GREEN, YELLOW, and RED classification samples.
  */
 
+// Minimal ParsedDocument shapes so the demo redline export uses the full tracked-changes path
+export const DEMO_PARSED_DOCUMENTS: Record<string, any> = {
+  yellow: {
+    filename: 'Vendor-NDA-Draft.docx',
+    fullText: 'The obligations of confidentiality shall survive for a period of five (5) years from the date of disclosure.\n\nThis Agreement shall be governed by and construed in accordance with the laws of the State of California.',
+    annotatedText: '[BLOCK:demo-yellow-block-1]The obligations of confidentiality shall survive for a period of five (5) years from the date of disclosure.[/BLOCK]\n\n[BLOCK:demo-yellow-block-2]This Agreement shall be governed by and construed in accordance with the laws of the State of California.[/BLOCK]',
+    blocks: [
+      {
+        id: 'demo-yellow-block-1',
+        type: 'paragraph',
+        content: 'The obligations of confidentiality shall survive for a period of five (5) years from the date of disclosure.',
+        charStart: 0,
+        charEnd: 108,
+      },
+      {
+        id: 'demo-yellow-block-2',
+        type: 'paragraph',
+        content: 'This Agreement shall be governed by and construed in accordance with the laws of the State of California.',
+        charStart: 110,
+        charEnd: 215,
+      },
+    ],
+    metadata: { pageCount: 3, wordCount: 1200, blockCount: 2 },
+  },
+  red: {
+    filename: 'problematic-nda.txt',
+    fullText: 'The Receiving Party agrees to hold in confidence all Confidential Information disclosed by the Disclosing Party.\n\nConfidential Information shall not include information that: (a) is publicly available; (b) was known prior to disclosure; (c) is received from a third party; (d) is required by law to be disclosed.\n\nReceiving Party shall not, for a period of two (2) years following termination, directly or indirectly compete with or solicit employees, clients, or business opportunities from the Disclosing Party in any market or sector.',
+    annotatedText: '[BLOCK:demo-block-1]The Receiving Party agrees to hold in confidence all Confidential Information disclosed by the Disclosing Party.[/BLOCK]\n\n[BLOCK:demo-block-2]Confidential Information shall not include information that: (a) is publicly available; (b) was known prior to disclosure; (c) is received from a third party; (d) is required by law to be disclosed.[/BLOCK]\n\n[BLOCK:demo-block-3]Receiving Party shall not, for a period of two (2) years following termination, directly or indirectly compete with or solicit employees, clients, or business opportunities from the Disclosing Party in any market or sector.[/BLOCK]',
+    blocks: [
+      {
+        id: 'demo-block-1',
+        type: 'paragraph',
+        content: 'The Receiving Party agrees to hold in confidence all Confidential Information disclosed by the Disclosing Party.',
+        charStart: 0,
+        charEnd: 112,
+      },
+      {
+        id: 'demo-block-2',
+        type: 'paragraph',
+        content: 'Confidential Information shall not include information that: (a) is publicly available; (b) was known prior to disclosure; (c) is received from a third party; (d) is required by law to be disclosed.',
+        charStart: 114,
+        charEnd: 312,
+      },
+      {
+        id: 'demo-block-3',
+        type: 'paragraph',
+        content: 'Receiving Party shall not, for a period of two (2) years following termination, directly or indirectly compete with or solicit employees, clients, or business opportunities from the Disclosing Party in any market or sector.',
+        charStart: 314,
+        charEnd: 537,
+      },
+    ],
+    metadata: { pageCount: 5, wordCount: 2400, blockCount: 3 },
+  },
+};
+
 export const DEMO_DATA: Record<string, any> = {
   green: {
     classification: 'green',
@@ -67,8 +122,42 @@ export const DEMO_DATA: Record<string, any> = {
         description: '5-year survival period exceeds our standard 3-year position.',
         risk: 'Longer ongoing obligations post-termination.',
         recommendation: 'Request reduction to 3 years. If pushed back, 4 years is acceptable for strategic vendors.',
-        sourceBlockIds: [],
-        sourceQuote: '',
+        sourceBlockIds: ['demo-yellow-block-1'],
+        sourceQuote: 'The obligations of confidentiality shall survive for a period of five (5) years',
+        editPlans: [
+          {
+            variant: 'preferred' as const,
+            description: 'Reduce survival period to standard 3 years',
+            operations: [
+              {
+                id: 'edit-y1a',
+                type: 'replace_range' as const,
+                blockId: 'demo-yellow-block-1',
+                startChar: 0,
+                endChar: 108,
+                newText: 'The obligations of confidentiality shall survive for a period of three (3) years from the date of disclosure.',
+                comment: 'Reduced survival period from 5 to 3 years per Consello playbook standard',
+                issueId: 'issue-1',
+              },
+            ],
+          },
+          {
+            variant: 'fallback' as const,
+            description: 'Compromise at 4 years for strategic vendor',
+            operations: [
+              {
+                id: 'edit-y1b',
+                type: 'replace_range' as const,
+                blockId: 'demo-yellow-block-1',
+                startChar: 0,
+                endChar: 108,
+                newText: 'The obligations of confidentiality shall survive for a period of four (4) years from the date of disclosure.',
+                comment: 'Reduced survival period from 5 to 4 years — acceptable range for strategic vendors',
+                issueId: 'issue-1',
+              },
+            ],
+          },
+        ],
       },
       {
         id: 'issue-2',
@@ -77,8 +166,26 @@ export const DEMO_DATA: Record<string, any> = {
         description: 'California governing law rather than preferred New York.',
         risk: 'Potentially broader interpretation of confidentiality obligations.',
         recommendation: 'Accept if vendor insists - California is within acceptable jurisdictions per playbook.',
-        sourceBlockIds: [],
-        sourceQuote: '',
+        sourceBlockIds: ['demo-yellow-block-2'],
+        sourceQuote: 'This Agreement shall be governed by and construed in accordance with the laws of the State of California',
+        editPlans: [
+          {
+            variant: 'preferred' as const,
+            description: 'Change governing law to New York',
+            operations: [
+              {
+                id: 'edit-y2a',
+                type: 'replace_range' as const,
+                blockId: 'demo-yellow-block-2',
+                startChar: 0,
+                endChar: 105,
+                newText: 'This Agreement shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of laws principles',
+                comment: 'Changed governing law from California to preferred New York jurisdiction per playbook',
+                issueId: 'issue-2',
+              },
+            ],
+          },
+        ],
       },
     ],
     recommendation: 'This NDA has minor deviations that should be reviewed by designated counsel before execution. Issues are negotiable and within acceptable ranges.',
@@ -132,7 +239,7 @@ export const DEMO_DATA: Record<string, any> = {
                 type: 'replace_range' as const,
                 blockId: 'demo-block-1',
                 startChar: 0,
-                endChar: 45,
+                endChar: 112,
                 newText: 'Each Party (as "Receiving Party") agrees to hold in confidence all Confidential Information disclosed by the other Party (as "Disclosing Party")',
                 comment: 'Converted to mutual NDA structure per Consello playbook',
                 issueId: 'issue-1',
@@ -186,7 +293,7 @@ export const DEMO_DATA: Record<string, any> = {
                 type: 'delete_range' as const,
                 blockId: 'demo-block-3',
                 startChar: 0,
-                endChar: 200,
+                endChar: 223,
                 comment: 'Non-compete clauses are prohibited in NDAs per Consello playbook',
                 issueId: 'issue-3',
               },

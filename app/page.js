@@ -8,7 +8,7 @@ import AnalysisProgressModal from './components/AnalysisProgressModal';
 import NotAContractPage from './components/NotAContractPage';
 import AuthScreen from './components/AuthScreen';
 import UploadPanel from './components/UploadPanel';
-import { DEMO_DATA } from './lib/demo-data';
+import { DEMO_DATA, DEMO_PARSED_DOCUMENTS } from './lib/demo-data';
 import { formatFileSize } from './lib/utils';
 import { generateReportHTML } from './lib/report-generator';
 
@@ -94,10 +94,10 @@ export default function Home() {
   // File handling
   const handleFileUpload = useCallback(async (file) => {
     const ext = '.' + file.name.split('.').pop().toLowerCase();
-    const validExtensions = ['.pdf', '.doc', '.docx', '.txt'];
+    const validExtensions = ['.pdf', '.docx', '.txt'];
 
     if (!validExtensions.includes(ext)) {
-      setError('Please upload a PDF, DOCX, or TXT file.');
+      setError('Please upload a PDF, DOCX, or TXT file. Legacy .doc format is not supported.');
       return;
     }
 
@@ -170,8 +170,6 @@ export default function Home() {
       } finally {
         setIsParsing(false);
       }
-    } else {
-      setDocumentContent(`[${ext.toUpperCase()} file uploaded - DOC parsing coming soon]`);
     }
   }, [password]);
 
@@ -236,7 +234,9 @@ export default function Home() {
   // Run demo (no API call)
   const runDemo = (type) => {
     const demoResult = DEMO_DATA[type];
+    const demoParsed = DEMO_PARSED_DOCUMENTS[type] || null;
     setResults(demoResult);
+    setParsedDocument(demoParsed);
     initRedlineDecisions(demoResult?.issues);
     setViewMode('results');
   };
@@ -255,6 +255,7 @@ export default function Home() {
 
     const abortController = new AbortController();
     analysisAbortRef.current = abortController;
+    let timedOut = false;
 
     try {
       setAnalysisPhase('analyze');
@@ -278,37 +279,53 @@ export default function Home() {
       const contentType = res.headers.get('content-type') || '';
 
       if (contentType.includes('text/event-stream')) {
-        // SSE streaming response
+        // SSE streaming response with timeout
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
         let finalResult = null;
+        let consecutiveErrors = 0;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // 90-second safety timeout
+        const timeoutId = setTimeout(() => {
+          timedOut = true;
+          abortController.abort();
+        }, 90000);
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const event = JSON.parse(line.slice(6));
-                if (event.type === 'progress') {
-                  setStreamProgress(event.progress || 0);
-                } else if (event.type === 'complete') {
-                  finalResult = event.result;
-                } else if (event.type === 'error') {
-                  throw new Error(event.message || 'Analysis failed');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const event = JSON.parse(line.slice(6));
+                  consecutiveErrors = 0;
+                  if (event.type === 'progress') {
+                    setStreamProgress(event.progress || 0);
+                  } else if (event.type === 'complete') {
+                    finalResult = event.result;
+                  } else if (event.type === 'error') {
+                    throw new Error(event.message || 'Analysis failed');
+                  }
+                } catch (parseErr) {
+                  if (parseErr.message === 'Analysis failed' || parseErr.message?.includes('Analysis')) throw parseErr;
+                  consecutiveErrors++;
+                  if (consecutiveErrors >= 3) {
+                    throw new Error('Analysis stream corrupted. Please try again.');
+                  }
+                  continue;
                 }
-              } catch (parseErr) {
-                if (parseErr.message !== 'Analysis failed') continue;
-                throw parseErr;
               }
             }
           }
+        } finally {
+          clearTimeout(timeoutId);
         }
 
         if (!finalResult) throw new Error('Stream ended without result');
@@ -363,7 +380,12 @@ export default function Home() {
         setViewMode('results');
       }
     } catch (err) {
-      if (err.name === 'AbortError') return; // User cancelled
+      if (err.name === 'AbortError') {
+        if (timedOut) {
+          setError('Analysis timed out. Please try again with a shorter document.');
+        }
+        return;
+      }
       setError(err.message);
     } finally {
       setIsAnalyzing(false);

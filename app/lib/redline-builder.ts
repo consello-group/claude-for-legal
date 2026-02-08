@@ -26,6 +26,7 @@ import {
   CommentRangeStart,
   CommentRangeEnd,
   CommentReference,
+  PageNumber,
 } from 'docx';
 import type {
   ParsedDocument,
@@ -151,6 +152,16 @@ function buildFooter(): Footer {
             text: 'This analysis does not constitute legal advice.',
             font: FONT, size: 14, color: '999999', italics: true,
           }),
+        ],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 80 },
+        children: [
+          new TextRun({ text: 'Page ', font: FONT, size: 14, color: '999999' }),
+          new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 14, color: '999999' }),
+          new TextRun({ text: ' of ', font: FONT, size: 14, color: '999999' }),
+          new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: 14, color: '999999' }),
         ],
       }),
     ],

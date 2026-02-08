@@ -156,15 +156,6 @@ export default function ReviewDashboard({
   const [severityFilter, setSeverityFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('severity');
 
-  useEffect(() => {
-    setMounted(true);
-    // Auto-open first issue on mount
-    const firstIssue = result.issues[0];
-    if (firstIssue) {
-      setOpenIssueId(firstIssue._original?.id || 'issue-0');
-    }
-  }, []);
-
   const result = deriveResultData(analysisResult);
 
   const hasIssues = result.issues.length > 0;
@@ -173,6 +164,14 @@ export default function ReviewDashboard({
   const criticalCount = result.issues.filter(i => i.severity === 'critical').length;
   const warningCount = result.issues.filter(i => i.severity === 'warning').length;
   const theme = THEMES[result.verdict];
+
+  // Filtered and sorted issues for display
+  const filteredIssues = severityFilter === 'all'
+    ? result.issues
+    : result.issues.filter(i => i.severity === severityFilter);
+  const sortedIssues = sortOrder === 'severity'
+    ? [...filteredIssues].sort((a, b) => (a.severity === 'critical' ? 0 : 1) - (b.severity === 'critical' ? 0 : 1))
+    : filteredIssues;
 
   // Redline selection counts (scoped to filtered view)
   const visibleEditableIds = filteredIssues
@@ -187,13 +186,14 @@ export default function ReviewDashboard({
   const globalEditableCount = Object.keys(redlineDecisions).length;
   const redlineDisabled = isExportingRedline || (globalEditableCount > 0 && globalSelectedCount === 0);
 
-  // Filtered and sorted issues for display
-  const filteredIssues = severityFilter === 'all'
-    ? result.issues
-    : result.issues.filter(i => i.severity === severityFilter);
-  const sortedIssues = sortOrder === 'severity'
-    ? [...filteredIssues].sort((a, b) => (a.severity === 'critical' ? 0 : 1) - (b.severity === 'critical' ? 0 : 1))
-    : filteredIssues;
+  useEffect(() => {
+    setMounted(true);
+    // Auto-open first issue on mount
+    const firstIssue = result.issues[0];
+    if (firstIssue) {
+      setOpenIssueId(firstIssue._original?.id || 'issue-0');
+    }
+  }, []);
 
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif", background: "#F8F9FA", minHeight: "100vh" }}>
