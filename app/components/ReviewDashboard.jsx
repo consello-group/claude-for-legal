@@ -354,7 +354,7 @@ export default function ReviewDashboard({
             }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
                 <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", margin: 0 }}>
-                  Playbook Screening
+                  Playbook Screening ({result.screening.length} criteria)
                 </h3>
                 <div style={{ display: "flex", gap: "12px", fontSize: "12px", fontWeight: 500 }}>
                   {failCount > 0 && <span style={{ color: "#DC2626" }}>{failCount} failed</span>}
@@ -418,7 +418,7 @@ export default function ReviewDashboard({
               marginBottom: "12px", padding: "0 2px",
             }}>
               <h3 style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "#999", margin: 0 }}>
-                Issues ({result.issues.length})
+                Issues Requiring Action ({result.issues.length})
               </h3>
               {criticalCount > 0 && (
                 <span style={{ fontSize: "11px", fontWeight: 600, color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.3px" }}>

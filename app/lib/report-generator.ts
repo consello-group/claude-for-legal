@@ -393,8 +393,8 @@ export function generateReportHTML(results: any): string {
     </tbody>
   </table>
 
-  <!-- Issues Found -->
-  <div class="section-title">Issues Found (${issueCount})</div>
+  <!-- Issues Requiring Action -->
+  <div class="section-title">Issues Requiring Action (${issueCount})</div>
   ${issueCount > 0 ? results.issues.map((issue: any) => {
     const sev = severityStyle(issue.severity);
     return `

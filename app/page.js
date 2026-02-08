@@ -587,6 +587,7 @@ export default function Home() {
         onSampleSelect={handleSampleSelect}
         onClear={startNewDocument}
         onAnalyze={runAnalysis}
+        onDemo={runDemo}
       />
 
       <footer className="footer">

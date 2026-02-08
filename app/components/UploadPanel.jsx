@@ -37,6 +37,7 @@ export default function UploadPanel({
   onSampleSelect,
   onClear,
   onAnalyze,
+  onDemo,
 }) {
   const fileInputRef = useRef(null);
   const hasSelection = selectedFile || selectedSample;
@@ -254,6 +255,39 @@ export default function UploadPanel({
           </div>
         ))}
       </div>
+
+      {/* Demo Mode */}
+      {onDemo && (
+        <div className={mounted ? "fade-up delay-4" : ""} style={{
+          marginTop: "28px", padding: "0 4px",
+        }}>
+          <p style={{ fontSize: "12px", color: "#999", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>
+            Instant demos
+          </p>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {[
+              { type: "green", label: "GREEN", desc: "Standard Approval", color: "#2E7D32", bg: "#E8F5E9" },
+              { type: "yellow", label: "YELLOW", desc: "Counsel Review", color: "#92400E", bg: "#FFF8E1" },
+              { type: "red", label: "RED", desc: "Escalation Required", color: "#C62828", bg: "#FFEBEE" },
+            ].map((demo) => (
+              <button
+                key={demo.type}
+                onClick={() => onDemo(demo.type)}
+                style={{
+                  flex: 1, padding: "12px 10px", borderRadius: "10px",
+                  border: `1.5px solid ${demo.color}20`,
+                  background: demo.bg,
+                  cursor: "pointer", textAlign: "center", transition: "all 0.2s",
+                  fontFamily: "'DM Sans', Arial, sans-serif",
+                }}
+              >
+                <div style={{ fontSize: "12px", fontWeight: 700, color: demo.color, letterSpacing: "0.3px" }}>{demo.label}</div>
+                <div style={{ fontSize: "11px", color: "#888", marginTop: "2px" }}>{demo.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Trust/Security Footer */}
       <div className={mounted ? "fade-up delay-4" : ""} style={{
