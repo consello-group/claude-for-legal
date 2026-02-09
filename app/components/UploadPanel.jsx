@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { formatFileSize } from '../lib/utils';
+import NavBar from './NavBar';
 
 export default function UploadPanel({
   selectedFile,
@@ -44,58 +45,7 @@ export default function UploadPanel({
         .demo-btn-v2:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
       `}</style>
 
-      {/* Nav */}
-      <nav style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 28px",
-        height: "56px",
-        background: "#fff",
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
-          <div style={{
-            width: "32px", height: "32px", background: "#000",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <span style={{ color: "#fff", fontSize: "7px", fontWeight: 700, letterSpacing: "0.4px", textTransform: "uppercase" }}>
-              Consello
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: "2px" }}>
-            {[
-              { label: "Analyze", href: "/", active: true },
-              { label: "Playbook", href: "/playbook", active: false },
-              { label: "About", href: "/about", active: false },
-            ].map((item) => (
-              <a key={item.label} href={item.href} style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                textDecoration: "none",
-                padding: "6px 14px",
-                borderRadius: "9999px",
-                background: item.active ? "#000" : "transparent",
-                color: item.active ? "#fff" : "#666",
-                transition: "all 0.15s ease",
-              }}>{item.label}</a>
-            ))}
-          </div>
-        </div>
-        <div
-          onClick={onLogout}
-          title="Logout"
-          style={{
-            width: "30px", height: "30px", borderRadius: "50%", background: "#000",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "11px", fontWeight: 600, color: "#fff", cursor: "pointer",
-          }}
-        >DM</div>
-      </nav>
+      <NavBar activePage="analyze" onLogout={onLogout} />
 
       {/* Main */}
       <main style={{

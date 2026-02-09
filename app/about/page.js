@@ -1,29 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import NavBar from '../components/NavBar';
 
 export default function AboutPage() {
   return (
     <>
-      <header className="header">
-        <div className="logo">
-          <Image
-            src="/consello-logo.jpg"
-            alt="Consello"
-            width={140}
-            height={40}
-            className="logo-image"
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        <nav className="nav">
-          <Link href="/" className="nav-btn">Analyze</Link>
-          <Link href="/playbook" className="nav-btn">Playbook</Link>
-          <Link href="/about" className="nav-btn active">About</Link>
-        </nav>
-        <div className="header-actions"></div>
-      </header>
+      <NavBar activePage="about" />
 
       {/* Hero Section with Background Image */}
       <section className="about-hero-banner">

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import ThresholdBar from '../components/ThresholdBar';
+import NavBar from '../components/NavBar';
 import {
   PLAYBOOK_CLAUSES,
   NDA_SCREENING,
@@ -57,24 +56,7 @@ export default function PlaybookPage() {
 
   return (
     <>
-      <header className="header">
-        <div className="logo">
-          <Image
-            src="/consello-logo.jpg"
-            alt="Consello"
-            width={140}
-            height={40}
-            className="logo-image"
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        <nav className="nav">
-          <Link href="/" className="nav-btn">Analyze</Link>
-          <Link href="/playbook" className="nav-btn active">Playbook</Link>
-          <Link href="/about" className="nav-btn">About</Link>
-        </nav>
-        <div className="header-actions"></div>
-      </header>
+      <NavBar activePage="playbook" />
 
       {/* Hero */}
       <section className="playbook-hero">

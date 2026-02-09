@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import IssueCard from './IssueCard';
+import NavBar from './NavBar';
 
 // ─── SVG Icon Components ─────────────────────────────────────────────
 
@@ -197,18 +198,18 @@ export default function ReviewDashboard({
 
   return (
     <div style={{ fontFamily: "'DM Sans', Arial, sans-serif", background: "#F8F9FA", minHeight: "100vh" }}>
-      {/* ── Top Bar ── */}
+      {/* ── Nav Bar ── */}
+      <NavBar activePage="analyze" />
+
+      {/* ── Action Bar ── */}
       <div style={{
         background: "#fff",
         borderBottom: "1px solid rgba(0,0,0,0.06)",
         padding: "0 32px",
-        height: "56px",
+        height: "48px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <button
@@ -223,7 +224,7 @@ export default function ReviewDashboard({
             <ArrowLeftIcon />
             New Document
           </button>
-          <h1 style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>Analysis Results</h1>
+          <h1 style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>Analysis Results</h1>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           <button
