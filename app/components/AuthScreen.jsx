@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 export default function AuthScreen({ password, setPassword, authError, authLoading, onLogin }) {
   return (
     <div style={{
@@ -22,14 +24,15 @@ export default function AuthScreen({ password, setPassword, authError, authLoadi
         margin: "16px",
       }}>
         {/* Logo */}
-        <div style={{
-          width: "40px", height: "40px", background: "#000",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 24px",
-        }}>
-          <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, letterSpacing: "0.4px", textTransform: "uppercase" }}>
-            Consello
-          </span>
+        <div style={{ margin: "0 auto 24px", display: "flex", justifyContent: "center" }}>
+          <Image
+            src="/consello-logo.jpg"
+            alt="Consello"
+            width={140}
+            height={40}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
         </div>
 
         <h1 style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.3px", marginBottom: "6px" }}>
