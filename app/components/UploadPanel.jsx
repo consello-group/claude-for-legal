@@ -97,7 +97,7 @@ export default function UploadPanel({
               background: isDragging ? "rgba(166,74,48,0.02)" : selectedFile ? "rgba(0,0,0,0.015)" : "transparent",
             }}
           >
-            <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={onFileSelect} style={{ display: "none" }} />
+            <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={onFileSelect} aria-label="Upload a contract file (PDF, DOCX, or TXT)" style={{ display: "none" }} />
             {selectedFile ? (
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{
