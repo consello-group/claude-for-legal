@@ -5,12 +5,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { DocumentBlock, ParsedDocument } from './types';
 
-// Dynamic import for pdf-parse (CommonJS module)
+// Import from pdf-parse/lib/pdf-parse directly to bypass index.js debug-mode
+// code that tries to read a test file (./test/data/05-versions-space.pdf)
 let pdfParse: any = null;
 
 async function getPdfParse() {
   if (!pdfParse) {
-    pdfParse = (await import('pdf-parse')).default;
+    pdfParse = (await import('pdf-parse/lib/pdf-parse')).default;
   }
   return pdfParse;
 }

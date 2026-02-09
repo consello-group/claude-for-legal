@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
+
 /**
  * Shared v2 navigation bar used across all pages.
- * Renders the Consello box logo, pill-style nav tabs, and user avatar.
+ * Renders the Consello logo image, pill-style nav tabs.
  */
 export default function NavBar({ activePage = 'analyze', onLogout }) {
   const pages = [
@@ -27,15 +29,15 @@ export default function NavBar({ activePage = 'analyze', onLogout }) {
       fontFamily: "'DM Sans', Arial, sans-serif",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
-        <a href="/" style={{ textDecoration: "none" }}>
-          <div style={{
-            width: "32px", height: "32px", background: "#000",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <span style={{ color: "#fff", fontSize: "7px", fontWeight: 700, letterSpacing: "0.4px", textTransform: "uppercase" }}>
-              Consello
-            </span>
-          </div>
+        <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+          <Image
+            src="/consello-logo.jpg"
+            alt="Consello"
+            width={120}
+            height={34}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
         </a>
         <div style={{ display: "flex", gap: "2px" }}>
           {pages.map((item) => (
@@ -52,19 +54,8 @@ export default function NavBar({ activePage = 'analyze', onLogout }) {
           ))}
         </div>
       </div>
-      {onLogout ? (
-        <div
-          onClick={onLogout}
-          title="Logout"
-          style={{
-            width: "30px", height: "30px", borderRadius: "50%", background: "#000",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "11px", fontWeight: 600, color: "#fff", cursor: "pointer",
-          }}
-        >DM</div>
-      ) : (
-        <div style={{ width: "30px" }} />
-      )}
+      {/* Right side spacer to keep nav centered-ish */}
+      <div style={{ width: "120px" }} />
     </nav>
   );
 }
