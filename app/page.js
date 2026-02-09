@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import ReviewDashboard from './components/ReviewDashboard';
 import AnalysisProgressModal from './components/AnalysisProgressModal';
 import NotAContractPage from './components/NotAContractPage';
@@ -41,7 +39,6 @@ export default function Home() {
 
   // New UI state
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedSample, setSelectedSample] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -102,7 +99,6 @@ export default function Home() {
     }
 
     setSelectedFile(file);
-    setSelectedSample(null);
     setCurrentDocument({
       name: file.name,
       size: formatFileSize(file.size),
@@ -185,26 +181,6 @@ export default function Home() {
     if (file) handleFileUpload(file);
   };
 
-  // Sample selection
-  const handleSampleSelect = async (sampleId) => {
-    setSelectedSample(sampleId);
-    setSelectedFile(null);
-
-    const filename = sampleId === 'standard' ? 'standard-nda.txt' : 'problematic-nda.txt';
-    try {
-      const res = await fetch(`/sample-ndas/${filename}`);
-      const content = await res.text();
-      setCurrentDocument({ name: filename, size: formatFileSize(content.length) });
-      setDocumentContent(content);
-      setParsedDocument(null);
-      setResults(null);
-      setError('');
-      setViewMode('input');
-    } catch (err) {
-      setError('Could not load sample document');
-    }
-  };
-
   // Initialize redline decisions from analysis issues
   const initRedlineDecisions = (issues) => {
     const decisions = {};
@@ -219,7 +195,6 @@ export default function Home() {
   // Clear document and start fresh
   const startNewDocument = () => {
     setSelectedFile(null);
-    setSelectedSample(null);
     setCurrentDocument(null);
     setDocumentContent('');
     setParsedDocument(null);
@@ -542,39 +517,8 @@ export default function Home() {
         }}
       />
 
-      <header className="header">
-        <div className="logo">
-          <Image
-            src="/consello-logo.jpg"
-            alt="Consello"
-            width={140}
-            height={40}
-            className="logo-image"
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        <nav className="nav">
-          <Link href="/" className="nav-btn active">Analyze</Link>
-          <Link href="/playbook" className="nav-btn">Playbook</Link>
-          <Link href="/about" className="nav-btn">About</Link>
-        </nav>
-        <div className="header-actions">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              sessionStorage.removeItem('legal-app-auth');
-              setIsAuthenticated(false);
-              setPassword('');
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
       <UploadPanel
         selectedFile={selectedFile}
-        selectedSample={selectedSample}
         isDragging={isDragging}
         isParsing={isParsing}
         isAnalyzing={isAnalyzing}
@@ -584,15 +528,15 @@ export default function Home() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onFileSelect={handleFileSelect}
-        onSampleSelect={handleSampleSelect}
         onClear={startNewDocument}
         onAnalyze={runAnalysis}
         onDemo={runDemo}
+        onLogout={() => {
+          sessionStorage.removeItem('legal-app-auth');
+          setIsAuthenticated(false);
+          setPassword('');
+        }}
       />
-
-      <footer className="footer">
-        <p>© {new Date().getFullYear()} Consello. This tool assists with legal workflows but does not constitute legal advice.</p>
-      </footer>
     </>
   );
 }
