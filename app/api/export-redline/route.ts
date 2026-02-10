@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { buildRedlineDocx, buildClauseReviewDocx } from '../../lib/redline-builder';
+import { buildRedlineDocx, buildCleanDocx, buildClauseReviewDocx } from '../../lib/redline-builder';
 import type { ParsedDocument, AnalysisResult, EditOperation, ExportOptions } from '../../lib/types';
 
 export async function POST(request: Request) {
@@ -16,11 +16,13 @@ export async function POST(request: Request) {
       analysisResult,
       selectedEdits = [],
       options = {},
+      mode = 'redline',
     } = body as {
       parsedDocument: ParsedDocument | null;
       analysisResult: AnalysisResult;
       selectedEdits: EditOperation[];
       options: Partial<ExportOptions>;
+      mode?: 'redline' | 'clean';
     };
 
     if (!analysisResult) {
@@ -36,13 +38,23 @@ export async function POST(request: Request) {
     let buffer: Buffer;
 
     if (selectedEdits.length > 0 && parsedDocument) {
-      // Full redline with tracked changes
-      buffer = await buildRedlineDocx(
-        parsedDocument,
-        analysisResult,
-        selectedEdits,
-        exportOptions,
-      );
+      if (mode === 'clean') {
+        // Clean revised document — edits applied as plain text
+        buffer = await buildCleanDocx(
+          parsedDocument,
+          analysisResult,
+          selectedEdits,
+          exportOptions,
+        );
+      } else {
+        // Full redline with tracked changes
+        buffer = await buildRedlineDocx(
+          parsedDocument,
+          analysisResult,
+          selectedEdits,
+          exportOptions,
+        );
+      }
     } else {
       // Fallback: branded clause review document
       buffer = await buildClauseReviewDocx(analysisResult, exportOptions);

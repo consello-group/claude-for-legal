@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import RedlineText from './RedlineText';
 
 const ChevronIcon = ({ open }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
@@ -17,18 +18,40 @@ const CheckIcon = () => (
   </svg>
 );
 
+/** Extract the "result" text (unchanged + inserted) from diff segments */
+function getInsertTextFromSegments(segments) {
+  if (!segments) return '';
+  return segments
+    .filter(s => s.type === 'insert' || s.type === 'unchanged')
+    .map(s => s.text)
+    .join('');
+}
+
 /**
  * IssueCard — Expandable card with severity-colored accent bar,
- * optional redline selection checkbox, and variant toggle.
+ * optional redline selection checkbox, variant toggle, inline redline
+ * preview, and edit mode.
  */
 export default function IssueCard({ issue, isOpen, onToggle, decision, onDecisionChange }) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+
   const severityColor = issue.severity === 'critical' ? '#DC2626' : '#F59E0B';
   const severityLabel = issue.severity === 'critical' ? 'CRITICAL' : 'WARNING';
 
   const hasEdits = issue._original?.editPlans?.length > 0;
   const hasVariants = issue._original?.editPlans?.length > 1;
   const isSelected = decision?.apply;
+  const hasCustomText = !!decision?.customText;
+
+  // Get diff segments for the currently selected variant
+  const activeDiffSegments = (() => {
+    const diffSegs = issue._original?.diffSegments;
+    if (!diffSegs) return null;
+    const variant = decision?.variant || 'preferred';
+    return diffSegs[variant] || diffSegs.preferred || null;
+  })();
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -99,7 +122,9 @@ export default function IssueCard({ issue, isOpen, onToggle, decision, onDecisio
           <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
             {issue.section} · <span style={{ color: severityColor, fontWeight: 600 }}>{severityLabel}</span>
             {hasEdits && isSelected && (
-              <span style={{ color: '#A64A30', marginLeft: '6px' }}>· In redline</span>
+              <span style={{ color: '#A64A30', marginLeft: '6px' }}>
+                · {hasCustomText ? 'Edited' : 'In redline'}
+              </span>
             )}
           </div>
         </div>
@@ -113,12 +138,57 @@ export default function IssueCard({ issue, isOpen, onToggle, decision, onDecisio
           paddingLeft: hasEdits ? '60px' : '32px',
           animation: 'fadeInUp 0.25s ease forwards',
         }}>
+          {/* Inline redline preview — shown when diffSegments exist and no custom edit */}
+          {activeDiffSegments && activeDiffSegments.length > 0 && !hasCustomText && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{
+                fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.3px', color: '#999', marginBottom: '8px',
+              }}>
+                Proposed Change
+              </div>
+              <RedlineText segments={activeDiffSegments} />
+            </div>
+          )}
+
+          {/* Custom edit indicator */}
+          {hasCustomText && (
+            <div style={{
+              marginBottom: '14px', padding: '10px 14px', borderRadius: '8px',
+              background: 'rgba(166, 74, 48, 0.04)', border: '1px solid rgba(166, 74, 48, 0.1)',
+            }}>
+              <div style={{
+                fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.3px', color: '#A64A30', marginBottom: '6px',
+              }}>
+                Your Edit
+              </div>
+              <div style={{ fontSize: '13px', color: '#333', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {decision.customText}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDecisionChange?.({ customText: undefined });
+                }}
+                style={{
+                  fontSize: '11px', fontWeight: 500, color: '#999', background: 'none',
+                  border: '1px solid rgba(0,0,0,0.08)', borderRadius: '6px',
+                  padding: '3px 10px', cursor: 'pointer', marginTop: '8px',
+                  fontFamily: "'DM Sans', Arial, sans-serif",
+                }}
+              >
+                Revert to suggestion
+              </button>
+            </div>
+          )}
+
           <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.6, marginBottom: '14px', whiteSpace: 'pre-wrap' }}>
             {issue.detail}
           </div>
 
           {/* Variant toggle (preferred/fallback) — only when selected and >1 variant */}
-          {hasEdits && hasVariants && isSelected && (
+          {hasEdits && hasVariants && isSelected && !hasCustomText && (
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
               {issue._original.editPlans.map(plan => (
                 <button
@@ -150,31 +220,100 @@ export default function IssueCard({ issue, isOpen, onToggle, decision, onDecisio
             </div>
           )}
 
-          {issue.suggestion && (
+          {/* Edit textarea mode */}
+          {isEditing ? (
             <div style={{
               fontSize: '13px', lineHeight: 1.6, padding: '12px 14px', borderRadius: '8px',
-              background: 'rgba(166, 74, 48, 0.04)', border: '1px solid rgba(166, 74, 48, 0.1)',
-              position: 'relative',
+              background: 'rgba(166, 74, 48, 0.04)', border: '1px solid rgba(166, 74, 48, 0.2)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{
                   fontWeight: 600, color: '#A64A30', fontSize: '11px',
                   textTransform: 'uppercase', letterSpacing: '0.3px',
-                }}>Suggested edit</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleCopy(issue.suggestion); }}
-                  style={{
-                    fontSize: '11px', fontWeight: 500, color: copied ? '#16A34A' : '#A64A30',
-                    background: 'none', border: '1px solid ' + (copied ? 'rgba(22,163,74,0.2)' : 'rgba(166,74,48,0.15)'),
-                    borderRadius: '6px', padding: '3px 10px', cursor: 'pointer',
-                    fontFamily: "'DM Sans', Arial, sans-serif", transition: 'all 0.15s ease',
-                  }}
-                >
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
+                }}>Edit Suggested Text</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDecisionChange?.({ customText: editText, apply: true });
+                      setIsEditing(false);
+                    }}
+                    style={{
+                      fontSize: '11px', fontWeight: 600, color: '#fff', background: '#A64A30',
+                      border: 'none', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer',
+                      fontFamily: "'DM Sans', Arial, sans-serif",
+                    }}
+                  >Save</button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}
+                    style={{
+                      fontSize: '11px', fontWeight: 500, color: '#666', background: 'none',
+                      border: '1px solid rgba(0,0,0,0.1)', borderRadius: '6px', padding: '4px 12px',
+                      cursor: 'pointer', fontFamily: "'DM Sans', Arial, sans-serif",
+                    }}
+                  >Cancel</button>
+                </div>
               </div>
-              <div style={{ marginTop: '4px', color: '#555' }}>{issue.suggestion}</div>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%', minHeight: '80px', padding: '10px', fontSize: '13px',
+                  fontFamily: "'DM Sans', Arial, sans-serif", lineHeight: 1.6,
+                  border: '1px solid rgba(0,0,0,0.1)', borderRadius: '6px',
+                  background: '#fff', resize: 'vertical', color: '#333', boxSizing: 'border-box',
+                }}
+              />
             </div>
+          ) : (
+            /* Suggestion box with Copy and Edit buttons */
+            issue.suggestion && (
+              <div style={{
+                fontSize: '13px', lineHeight: 1.6, padding: '12px 14px', borderRadius: '8px',
+                background: 'rgba(166, 74, 48, 0.04)', border: '1px solid rgba(166, 74, 48, 0.1)',
+                position: 'relative',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{
+                    fontWeight: 600, color: '#A64A30', fontSize: '11px',
+                    textTransform: 'uppercase', letterSpacing: '0.3px',
+                  }}>Suggested edit</span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {hasEdits && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const suggestedText = getInsertTextFromSegments(activeDiffSegments) || issue.suggestion || '';
+                          setEditText(suggestedText);
+                          setIsEditing(true);
+                        }}
+                        style={{
+                          fontSize: '11px', fontWeight: 500, color: '#A64A30',
+                          background: 'none', border: '1px solid rgba(166,74,48,0.15)',
+                          borderRadius: '6px', padding: '3px 10px', cursor: 'pointer',
+                          fontFamily: "'DM Sans', Arial, sans-serif", transition: 'all 0.15s ease',
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCopy(issue.suggestion); }}
+                      style={{
+                        fontSize: '11px', fontWeight: 500, color: copied ? '#16A34A' : '#A64A30',
+                        background: 'none', border: '1px solid ' + (copied ? 'rgba(22,163,74,0.2)' : 'rgba(166,74,48,0.15)'),
+                        borderRadius: '6px', padding: '3px 10px', cursor: 'pointer',
+                        fontFamily: "'DM Sans', Arial, sans-serif", transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ marginTop: '4px', color: '#555' }}>{issue.suggestion}</div>
+              </div>
+            )
           )}
         </div>
       )}

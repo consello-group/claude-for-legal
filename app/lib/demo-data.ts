@@ -158,6 +158,20 @@ export const DEMO_DATA: Record<string, any> = {
             ],
           },
         ],
+        diffSegments: {
+          preferred: [
+            { type: 'unchanged' as const, text: 'The obligations of confidentiality shall survive for a period of ' },
+            { type: 'delete' as const, text: 'five (5)' },
+            { type: 'insert' as const, text: 'three (3)' },
+            { type: 'unchanged' as const, text: ' years from the date of disclosure.' },
+          ],
+          fallback: [
+            { type: 'unchanged' as const, text: 'The obligations of confidentiality shall survive for a period of ' },
+            { type: 'delete' as const, text: 'five (5)' },
+            { type: 'insert' as const, text: 'four (4)' },
+            { type: 'unchanged' as const, text: ' years from the date of disclosure.' },
+          ],
+        },
       },
       {
         id: 'issue-2',
@@ -186,6 +200,14 @@ export const DEMO_DATA: Record<string, any> = {
             ],
           },
         ],
+        diffSegments: {
+          preferred: [
+            { type: 'unchanged' as const, text: 'This Agreement shall be governed by and construed in accordance with the laws of the State of ' },
+            { type: 'delete' as const, text: 'California' },
+            { type: 'insert' as const, text: 'New York, without regard to its conflict of laws principles' },
+            { type: 'unchanged' as const, text: '.' },
+          ],
+        },
       },
     ],
     recommendation: 'This NDA has minor deviations that should be reviewed by designated counsel before execution. Issues are negotiable and within acceptable ranges.',
@@ -247,6 +269,16 @@ export const DEMO_DATA: Record<string, any> = {
             ],
           },
         ],
+        diffSegments: {
+          preferred: [
+            { type: 'delete' as const, text: 'The Receiving Party' },
+            { type: 'insert' as const, text: 'Each Party (as "Receiving Party")' },
+            { type: 'unchanged' as const, text: ' agrees to hold in confidence all Confidential Information disclosed by ' },
+            { type: 'delete' as const, text: 'the Disclosing Party' },
+            { type: 'insert' as const, text: 'the other Party (as "Disclosing Party")' },
+            { type: 'unchanged' as const, text: '.' },
+          ],
+        },
       },
       {
         id: 'issue-2',
@@ -273,6 +305,12 @@ export const DEMO_DATA: Record<string, any> = {
             ],
           },
         ],
+        diffSegments: {
+          preferred: [
+            { type: 'unchanged' as const, text: '(d) is required by law to be disclosed. ' },
+            { type: 'insert' as const, text: '(e) information that is independently developed by the Receiving Party without reference to or use of the Disclosing Party\'s Confidential Information, as demonstrated by written records;' },
+          ],
+        },
       },
       {
         id: 'issue-3',
@@ -300,6 +338,11 @@ export const DEMO_DATA: Record<string, any> = {
             ],
           },
         ],
+        diffSegments: {
+          preferred: [
+            { type: 'delete' as const, text: 'Receiving Party shall not, for a period of two (2) years following termination, directly or indirectly compete with or solicit employees, clients, or business opportunities from the Disclosing Party in any market or sector.' },
+          ],
+        },
       },
     ],
     recommendation: 'DO NOT SIGN. This NDA contains multiple provisions that violate playbook standards and create unacceptable risk. Escalate to senior counsel and provide counterparty with our standard mutual NDA template.',

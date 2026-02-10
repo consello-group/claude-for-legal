@@ -93,6 +93,13 @@ export interface EditPlan {
   operations: EditOperation[];
 }
 
+export interface DiffSegment {
+  /** Type of segment */
+  type: 'unchanged' | 'delete' | 'insert';
+  /** The text content */
+  text: string;
+}
+
 export interface AnalysisIssue {
   /** Unique ID for this issue */
   id: string;
@@ -112,6 +119,11 @@ export interface AnalysisIssue {
   sourceQuote?: string;
   /** Edit plans with preferred and fallback variants */
   editPlans?: EditPlan[];
+  /** Word-level diff segments for inline redline preview, keyed by variant */
+  diffSegments?: {
+    preferred?: DiffSegment[];
+    fallback?: DiffSegment[];
+  };
 }
 
 export interface AnalysisResult {
@@ -154,6 +166,8 @@ export interface IssueDecision {
   variant: 'preferred' | 'fallback';
   /** Whether to include explanatory comment */
   includeComment: boolean;
+  /** User-edited replacement text (overrides editPlan's newText) */
+  customText?: string;
 }
 
 export interface RedlineDecisions {

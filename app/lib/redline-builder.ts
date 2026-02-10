@@ -483,6 +483,179 @@ export async function buildRedlineDocx(
 }
 
 /**
+ * Apply edit operations to a block's content, returning the clean result text
+ * (no tracked changes markup — just the final text after edits).
+ */
+function applyEditsCleanly(
+  block: DocumentBlock,
+  edits: EditOperation[],
+): string {
+  const content = block.content;
+
+  const rangeEdits = edits
+    .filter(e => e.type === 'replace_range' || e.type === 'delete_range')
+    .filter(e => typeof e.startChar === 'number' && typeof e.endChar === 'number');
+  const insertAfterEdits = edits.filter(e => e.type === 'insert_after');
+
+  // Validate, clamp, sort, deduplicate — same as applyEditsToBlock
+  const validEdits = rangeEdits
+    .map(e => ({
+      ...e,
+      startChar: Math.max(0, Math.min(e.startChar!, content.length)),
+      endChar: Math.max(0, Math.min(e.endChar!, content.length)),
+    }))
+    .filter(e => e.startChar! < e.endChar!)
+    .sort((a, b) => a.startChar! - b.startChar!);
+
+  const nonOverlapping: typeof validEdits = [];
+  let lastEnd = 0;
+  for (const edit of validEdits) {
+    if (edit.startChar! >= lastEnd) {
+      nonOverlapping.push(edit);
+      lastEnd = edit.endChar!;
+    }
+  }
+
+  // Walk content and build result string
+  let result = '';
+  let cursor = 0;
+  for (const edit of nonOverlapping) {
+    result += content.slice(cursor, edit.startChar!);
+    if (edit.type === 'replace_range' && edit.newText) {
+      result += edit.newText;
+    }
+    // delete_range: skip the deleted text
+    cursor = edit.endChar!;
+  }
+  result += content.slice(cursor);
+
+  // insert_after: append
+  for (const edit of insertAfterEdits) {
+    if (edit.newText) result += ' ' + edit.newText;
+  }
+
+  return result;
+}
+
+/**
+ * Build a clean revised DOCX with edits applied as plain text (no tracked changes).
+ * Outputs the full document with all blocks — edited blocks show final text.
+ */
+export async function buildCleanDocx(
+  parsedDocument: ParsedDocument,
+  analysisResult: AnalysisResult,
+  selectedEdits: EditOperation[],
+  options: ExportOptions,
+): Promise<Buffer> {
+  // Group edits by blockId
+  const blockIds = new Set(parsedDocument.blocks.map(b => b.id));
+  const validEdits = selectedEdits.filter(e => blockIds.has(e.blockId));
+  const editsByBlock = new Map<string, EditOperation[]>();
+  for (const edit of validEdits) {
+    const existing = editsByBlock.get(edit.blockId) || [];
+    existing.push(edit);
+    editsByBlock.set(edit.blockId, existing);
+  }
+
+  const docChildren: any[] = [];
+  const docName = parsedDocument.filename || options.filename || 'Document';
+
+  // Title
+  docChildren.push(new Paragraph({
+    heading: HeadingLevel.HEADING_1,
+    children: [new TextRun({
+      text: 'Revised Document',
+      bold: true, font: FONT, size: 32, color: '000000',
+    })],
+    spacing: { after: 120 },
+  }));
+
+  // Classification badge
+  const classColor = CLASSIFICATION_COLORS[analysisResult.classification] || '000000';
+  docChildren.push(new Paragraph({
+    children: [new TextRun({
+      text: classificationLabel(analysisResult.classification),
+      bold: true, font: FONT, size: 24, color: classColor,
+    })],
+    spacing: { after: 200 },
+  }));
+
+  // Date + edit count
+  const editCount = validEdits.length;
+  docChildren.push(new Paragraph({
+    children: [new TextRun({
+      text: `Generated: ${dateLabel()} — ${editCount} edit${editCount !== 1 ? 's' : ''} applied`,
+      font: FONT, size: 18, color: '999999',
+    })],
+    spacing: { after: 300 },
+  }));
+
+  // Summary table
+  docChildren.push(new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    children: [new TextRun({ text: 'Contract Summary', bold: true, font: FONT, size: 26 })],
+    spacing: { before: 200, after: 120 },
+  }));
+  docChildren.push(buildSummaryTable(analysisResult));
+
+  // Divider before document body
+  docChildren.push(new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    children: [new TextRun({ text: 'Revised Text', bold: true, font: FONT, size: 26 })],
+    spacing: { before: 400, after: 120 },
+  }));
+
+  // Process ALL blocks
+  for (const block of parsedDocument.blocks) {
+    const blockEdits = editsByBlock.get(block.id);
+    const text = blockEdits && blockEdits.length > 0
+      ? applyEditsCleanly(block, blockEdits)
+      : block.content;
+
+    if (!text.trim()) continue;
+
+    // Determine paragraph style from block type
+    if (block.type === 'heading') {
+      const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
+        1: HeadingLevel.HEADING_1,
+        2: HeadingLevel.HEADING_2,
+        3: HeadingLevel.HEADING_3,
+      };
+      docChildren.push(new Paragraph({
+        heading: headingMap[block.level || 2] || HeadingLevel.HEADING_2,
+        children: [new TextRun({ text, bold: true, font: FONT, size: 24 })],
+        spacing: { before: 240, after: 100 },
+      }));
+    } else {
+      docChildren.push(new Paragraph({
+        children: [new TextRun({ text, font: FONT, size: 22 })],
+        spacing: { before: 80, after: 80 },
+      }));
+    }
+  }
+
+  const doc = new DocxDocument({
+    // No trackRevisions — this is a clean document
+    creator: options.author || 'Consello Legal AI',
+    title: `${docName} — Revised`,
+    styles: {
+      default: {
+        document: {
+          run: { font: FONT, size: 22 },
+        },
+      },
+    },
+    sections: [{
+      headers: { default: buildHeader(docName) },
+      footers: { default: buildFooter() },
+      children: docChildren,
+    }],
+  });
+
+  return await Packer.toBuffer(doc) as Buffer;
+}
+
+/**
  * Build a branded clause review DOCX (fallback when editPlans unavailable).
  */
 export async function buildClauseReviewDocx(

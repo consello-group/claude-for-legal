@@ -37,6 +37,18 @@ editPlans example:
 Operation types: "replace_range" (replace text at startChar-endChar with newText), "delete_range" (remove text at startChar-endChar), "insert_after" (add newText after the block).
 Use the playbook standard positions for replacement text. Character offsets are 0-based within the block content string.
 If no block IDs are present in the document, omit editPlans.
+
+For each issue with editPlans, also include "diffSegments" with word-level diff tokens keyed by variant ("preferred" and/or "fallback"). Each segment has "type" ("unchanged"/"delete"/"insert") and "text". Cover the full clause around the edit for context so the user can see what changes in situ.
+
+diffSegments example:
+"diffSegments": {
+  "preferred": [
+    { "type": "unchanged", "text": "The Receiving Party shall maintain confidentiality for a period of " },
+    { "type": "delete", "text": "five (5)" },
+    { "type": "insert", "text": "three (3)" },
+    { "type": "unchanged", "text": " years from the date of disclosure." }
+  ]
+}
 `;
 
 // ============================================
@@ -99,7 +111,15 @@ Return a JSON object with this EXACT structure:
       "recommendation": "Action to take",
       "sourceBlockIds": [],
       "sourceQuote": "Quote (max 150 chars)",
-      "editPlans": []
+      "editPlans": [],
+      "diffSegments": {
+        "preferred": [
+          { "type": "unchanged", "text": "existing clause text " },
+          { "type": "delete", "text": "problematic language" },
+          { "type": "insert", "text": "recommended replacement" },
+          { "type": "unchanged", "text": " remaining text." }
+        ]
+      }
     }
   ],
   "recommendation": "Overall recommendation",
@@ -258,7 +278,7 @@ Return ONLY valid JSON as specified in the system prompt.`;
 
           const stream = anthropic.messages.stream({
             model: 'claude-sonnet-4-5-20250929',
-            max_tokens: 6144,
+            max_tokens: 8192,
             messages: [{ role: 'user', content: userMessage }],
             system: ANALYSIS_PROMPT,
           });

@@ -32,6 +32,7 @@ export default function Home() {
   const [notContractInfo, setNotContractInfo] = useState(null);
   const [streamProgress, setStreamProgress] = useState(0);
   const [isExportingRedline, setIsExportingRedline] = useState(false);
+  const [isExportingClean, setIsExportingClean] = useState(false);
   const [redlineDecisions, setRedlineDecisions] = useState({});
 
   // Abort controller for analysis cancellation
@@ -397,7 +398,12 @@ export default function Home() {
         const variantName = decision.variant || 'preferred';
         const plan = issue.editPlans.find(p => p.variant === variantName) || issue.editPlans[0];
         for (const op of plan.operations) {
-          selectedEdits.push(op);
+          // If user provided custom text, override newText on replace_range ops
+          if (decision.customText && op.type === 'replace_range') {
+            selectedEdits.push({ ...op, newText: decision.customText });
+          } else {
+            selectedEdits.push(op);
+          }
         }
       }
 
@@ -442,6 +448,71 @@ export default function Home() {
     }
   };
 
+  // Export clean revised DOCX (no tracked changes)
+  const exportClean = async () => {
+    if (!results) return;
+    setIsExportingClean(true);
+    setError('');
+
+    try {
+      const selectedEdits = [];
+      for (const issue of (results.issues || [])) {
+        if (!issue.editPlans || issue.editPlans.length === 0) continue;
+        const decision = redlineDecisions[issue.id];
+        if (!decision?.apply) continue;
+        const variantName = decision.variant || 'preferred';
+        const plan = issue.editPlans.find(p => p.variant === variantName) || issue.editPlans[0];
+        for (const op of plan.operations) {
+          if (decision.customText && op.type === 'replace_range') {
+            selectedEdits.push({ ...op, newText: decision.customText });
+          } else {
+            selectedEdits.push(op);
+          }
+        }
+      }
+
+      const filename = currentDocument?.name
+        ? currentDocument.name.replace(/\.[^.]+$/, '') + '-clean.docx'
+        : 'document-clean.docx';
+
+      const res = await fetch('/api/export-redline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-password': password,
+        },
+        body: JSON.stringify({
+          parsedDocument: parsedDocument || null,
+          analysisResult: results,
+          selectedEdits,
+          options: {
+            author: 'Consello Legal AI',
+            includeComments: false,
+            filename,
+          },
+          mode: 'clean',
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Export failed');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(`Clean export failed: ${err.message}`);
+    } finally {
+      setIsExportingClean(false);
+    }
+  };
+
   // Login screen
   if (!isAuthenticated) {
     return (
@@ -476,7 +547,9 @@ export default function Home() {
         onBack={startNewDocument}
         onExport={exportReport}
         onExportRedline={exportRedline}
+        onExportClean={exportClean}
         isExportingRedline={isExportingRedline}
+        isExportingClean={isExportingClean}
         redlineDecisions={redlineDecisions}
         onDecisionChange={(issueId, patch) => {
           setRedlineDecisions(prev => ({

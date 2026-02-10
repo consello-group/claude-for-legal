@@ -147,7 +147,9 @@ export default function ReviewDashboard({
   onBack,
   onExport,
   onExportRedline,
+  onExportClean,
   isExportingRedline = false,
+  isExportingClean = false,
   redlineDecisions = {},
   onDecisionChange,
   onSelectAll,
@@ -243,6 +245,25 @@ export default function ReviewDashboard({
           >
             {isExportingRedline ? <SpinnerIcon /> : <WordDocIcon />}
             {isExportingRedline ? "Generating..." : globalSelectedCount > 0 ? `Download Redline (${globalSelectedCount})` : "Download Redline"}
+          </button>
+          <button
+            onClick={onExportClean}
+            disabled={redlineDisabled || isExportingClean}
+            title={redlineDisabled && !isExportingClean ? "Select issues to include" : ""}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600,
+              color: redlineDisabled || isExportingClean ? "#999" : "#A64A30",
+              background: "none",
+              border: `1px solid ${redlineDisabled || isExportingClean ? "rgba(0,0,0,0.08)" : "rgba(166,74,48,0.25)"}`,
+              borderRadius: "9999px", padding: "8px 18px",
+              cursor: redlineDisabled || isExportingClean ? "default" : "pointer",
+              fontFamily: "'DM Sans', Arial, sans-serif",
+              opacity: redlineDisabled || isExportingClean ? 0.5 : 1,
+              transition: "all 0.15s ease",
+            }}
+          >
+            {isExportingClean ? <SpinnerIcon /> : <WordDocIcon />}
+            {isExportingClean ? "Generating..." : "Clean Revised"}
           </button>
           <button
             onClick={onExport}
