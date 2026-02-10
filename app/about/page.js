@@ -304,12 +304,13 @@ export default function AboutPage() {
           <div className="section-label">Technology</div>
           <h2>Built on Claude</h2>
           <p className="tech-intro">
-            Powered by Anthropic's Claude Sonnet 4, optimized for speed and accuracy in
-            legal document analysis. Claude excels at understanding legal language,
-            identifying subtle issues, and providing actionable recommendations.
+            Powered by Anthropic's Claude — Haiku 4.5 for instant document classification,
+            Sonnet 4.5 for deep legal analysis. Optimized for speed, accuracy, and cost efficiency
+            in legal document review.
           </p>
           <div className="tech-badges">
-            <span className="tech-badge">Claude Sonnet 4</span>
+            <span className="tech-badge">Claude Sonnet 4.5</span>
+            <span className="tech-badge">Claude Haiku 4.5</span>
             <span className="tech-badge">Anthropic API</span>
             <span className="tech-badge">Next.js</span>
             <span className="tech-badge">Vercel</span>

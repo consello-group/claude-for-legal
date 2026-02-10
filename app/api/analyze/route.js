@@ -40,36 +40,40 @@ If no block IDs are present in the document, omit editPlans.
 `;
 
 // ============================================
-// UNIFIED CONTRACT ANALYSIS PROMPT
+// STAGE 1 — Pre-screen prompt (Haiku 4.5, fast & cheap)
 // ============================================
 
-const UNIFIED_ANALYSIS_PROMPT = `You are a legal analyst for Consello LLC. Your job is to analyze legal documents against the organizational playbook.
-
-FIRST: Determine if this document is a legal contract or agreement.
+const PRESCREEN_PROMPT = `You classify documents. Determine if this is a legal contract or agreement.
 
 Legal contracts/agreements include:
-- Non-Disclosure Agreements (NDAs), Confidentiality Agreements
-- Service Agreements, Master Service Agreements (MSAs)
-- Software License Agreements, SaaS Agreements
-- Employment Agreements, Consulting Agreements
-- Purchase Agreements, Vendor Agreements
-- Letters of Intent (LOIs) with binding provisions
+- NDAs, Confidentiality Agreements
+- Service Agreements, MSAs, SaaS Agreements
+- Employment, Consulting, or Vendor Agreements
+- Purchase Agreements, License Agreements
+- Letters of Intent with binding provisions
 - Amendments to existing agreements
 
-NOT legal contracts (return isContract: false):
+NOT legal contracts:
 - Marketing materials, brochures, pitch decks
-- Internal memos, meeting notes
-- Articles, blog posts, news
-- Resumes, CVs
-- General correspondence without legal obligations
+- Internal memos, meeting notes, articles, blog posts
+- Resumes, CVs, general correspondence
 - Technical documentation, user manuals
 - Financial statements, reports
+
+Return ONLY valid JSON:
+{"isContract": true, "documentType": "NDA"} or {"isContract": false, "documentType": "Resume", "notContractReason": "This appears to be a resume."}`;
+
+// ============================================
+// STAGE 2 — Full analysis prompt (Sonnet 4.5, deep review)
+// ============================================
+
+const ANALYSIS_PROMPT = `You are a legal analyst for Consello LLC. Analyze this legal document against the organizational playbook.
 
 ${LEGAL_PLAYBOOK}
 
 ${BLOCK_REFERENCE_INSTRUCTIONS}
 
-Analyze the document and return a JSON object with this EXACT structure:
+Return a JSON object with this EXACT structure:
 
 {
   "isContract": true,
@@ -102,13 +106,6 @@ Analyze the document and return a JSON object with this EXACT structure:
   "nextSteps": ["Step 1", "Step 2"]
 }
 
-If NOT a contract, return:
-{
-  "isContract": false,
-  "documentType": "Not a Contract",
-  "notContractReason": "This appears to be a resume/article/memo/etc."
-}
-
 SCREENING CRITERIA - evaluate all that apply based on document type:
 
 For NDAs:
@@ -138,7 +135,34 @@ For Service/License Agreements:
 Return ONLY valid JSON. No markdown, no explanation text outside the JSON.`;
 
 // ============================================
-// API Handler
+// Helpers
+// ============================================
+
+/** Extract first complete JSON object from a string */
+function extractJson(raw) {
+  let str = raw.trim();
+  if (str.startsWith('```json')) str = str.slice(7);
+  else if (str.startsWith('```')) str = str.slice(3);
+  if (str.endsWith('```')) str = str.slice(0, -3);
+  str = str.trim();
+
+  const startIdx = str.indexOf('{');
+  if (startIdx === -1) throw new Error('No JSON object found in response');
+
+  let braceCount = 0;
+  let endIdx = -1;
+  for (let i = startIdx; i < str.length; i++) {
+    if (str[i] === '{') braceCount++;
+    if (str[i] === '}') braceCount--;
+    if (braceCount === 0) { endIdx = i; break; }
+  }
+  if (endIdx === -1) throw new Error('Unbalanced JSON braces in response');
+
+  return JSON.parse(str.slice(startIdx, endIdx + 1));
+}
+
+// ============================================
+// API Handler — two-stage pipeline
 // ============================================
 
 export async function POST(request) {
@@ -162,28 +186,10 @@ export async function POST(request) {
       );
     }
 
-    const userMessage = `Please analyze this document:
-
-Filename: ${filename || 'document.txt'}
-
----
-${document}
----
-
-Return ONLY valid JSON as specified in the system prompt. First determine if this is a legal contract, then analyze accordingly.`;
-
-    // Use streaming to provide real-time progress
-    const stream = anthropic.messages.stream({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 6144,
-      messages: [
-        {
-          role: 'user',
-          content: userMessage
-        }
-      ],
-      system: UNIFIED_ANALYSIS_PROMPT,
-    });
+    // Truncate document for pre-screen (first ~3000 chars is plenty to classify)
+    const prescreenDoc = document.length > 3000
+      ? document.slice(0, 3000) + '\n\n[...document truncated for classification...]'
+      : document;
 
     // Create SSE response stream
     const encoder = new TextEncoder();
@@ -193,91 +199,104 @@ Return ONLY valid JSON as specified in the system prompt. First determine if thi
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         };
 
-        let fullText = '';
-        let tokenCount = 0;
-        const estimatedTokens = 3500; // Rough estimate for progress bar (includes editPlans)
-
         try {
-          stream.on('text', (text) => {
-            fullText += text;
-            tokenCount += text.split(/\s+/).length; // Rough word-based approximation
-            const progress = Math.min(Math.round((tokenCount / estimatedTokens) * 90), 90);
-            send({ type: 'progress', progress, tokens: tokenCount });
+          // ── Stage 1: Haiku pre-screen ──
+          send({ type: 'progress', progress: 2, stage: 'prescreen' });
+
+          const prescreenResult = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 256,
+            system: PRESCREEN_PROMPT,
+            messages: [{
+              role: 'user',
+              content: `Classify this document:\n\nFilename: ${filename || 'document.txt'}\n\n---\n${prescreenDoc}\n---\n\nReturn ONLY valid JSON.`,
+            }],
           });
 
-          const finalMessage = await stream.finalMessage();
+          const prescreenText = prescreenResult.content[0]?.text || '';
+          const prescreenJson = extractJson(prescreenText);
 
-          // Parse the complete response
-          let jsonStr = fullText.trim();
-
-          // Remove markdown code blocks if present
-          if (jsonStr.startsWith('```json')) {
-            jsonStr = jsonStr.slice(7);
-          } else if (jsonStr.startsWith('```')) {
-            jsonStr = jsonStr.slice(3);
-          }
-          if (jsonStr.endsWith('```')) {
-            jsonStr = jsonStr.slice(0, -3);
-          }
-          jsonStr = jsonStr.trim();
-
-          // Find the first { and match to its closing }
-          const startIdx = jsonStr.indexOf('{');
-          if (startIdx === -1) {
-            throw new Error('No JSON object found in response');
-          }
-
-          let braceCount = 0;
-          let endIdx = -1;
-          for (let i = startIdx; i < jsonStr.length; i++) {
-            if (jsonStr[i] === '{') braceCount++;
-            if (jsonStr[i] === '}') braceCount--;
-            if (braceCount === 0) {
-              endIdx = i;
-              break;
-            }
-          }
-
-          if (endIdx === -1) {
-            throw new Error('Unbalanced JSON braces in response');
-          }
-
-          jsonStr = jsonStr.slice(startIdx, endIdx + 1);
-          const analysisJson = JSON.parse(jsonStr);
-
-          const usage = {
-            input_tokens: finalMessage.usage.input_tokens,
-            output_tokens: finalMessage.usage.output_tokens,
+          const prescreenUsage = {
+            input_tokens: prescreenResult.usage.input_tokens,
+            output_tokens: prescreenResult.usage.output_tokens,
           };
 
-          // Check if it's a contract
-          if (analysisJson.isContract === false) {
+          send({
+            type: 'prescreen',
+            isContract: prescreenJson.isContract,
+            documentType: prescreenJson.documentType,
+          });
+
+          // If not a contract, short-circuit — no need for the expensive call
+          if (prescreenJson.isContract === false) {
             send({
               type: 'complete',
               result: {
                 success: true,
                 isContract: false,
-                documentType: analysisJson.documentType || 'Unknown',
-                notContractReason: analysisJson.notContractReason || 'This document does not appear to be a legal contract.',
-                usage,
-              }
+                documentType: prescreenJson.documentType || 'Unknown',
+                notContractReason: prescreenJson.notContractReason || 'This document does not appear to be a legal contract.',
+                usage: prescreenUsage,
+              },
             });
-          } else {
-            if (!analysisJson.classification) {
-              throw new Error('Missing classification in analysis JSON');
-            }
-
-            send({
-              type: 'complete',
-              result: {
-                success: true,
-                isContract: true,
-                analysis: analysisJson,
-                rawAnalysis: fullText,
-                usage,
-              }
-            });
+            controller.close();
+            return;
           }
+
+          // ── Stage 2: Sonnet 4.5 full analysis ──
+          send({ type: 'progress', progress: 10, stage: 'analysis' });
+
+          const userMessage = `Analyze this ${prescreenJson.documentType || 'legal document'}:
+
+Filename: ${filename || 'document.txt'}
+
+---
+${document}
+---
+
+Return ONLY valid JSON as specified in the system prompt.`;
+
+          const stream = anthropic.messages.stream({
+            model: 'claude-sonnet-4-5-20250929',
+            max_tokens: 6144,
+            messages: [{ role: 'user', content: userMessage }],
+            system: ANALYSIS_PROMPT,
+          });
+
+          let fullText = '';
+          let tokenCount = 0;
+          const estimatedTokens = 3500;
+
+          stream.on('text', (text) => {
+            fullText += text;
+            tokenCount += text.split(/\s+/).length;
+            // Progress 10-90 for the analysis stage
+            const progress = 10 + Math.min(Math.round((tokenCount / estimatedTokens) * 80), 80);
+            send({ type: 'progress', progress, tokens: tokenCount, stage: 'analysis' });
+          });
+
+          const finalMessage = await stream.finalMessage();
+          const analysisJson = extractJson(fullText);
+
+          const usage = {
+            input_tokens: prescreenUsage.input_tokens + finalMessage.usage.input_tokens,
+            output_tokens: prescreenUsage.output_tokens + finalMessage.usage.output_tokens,
+          };
+
+          if (!analysisJson.classification) {
+            throw new Error('Missing classification in analysis JSON');
+          }
+
+          send({
+            type: 'complete',
+            result: {
+              success: true,
+              isContract: true,
+              analysis: analysisJson,
+              rawAnalysis: fullText,
+              usage,
+            },
+          });
         } catch (err) {
           console.error('Stream/parse error:', err);
           send({ type: 'error', message: err.message || 'Analysis failed' });

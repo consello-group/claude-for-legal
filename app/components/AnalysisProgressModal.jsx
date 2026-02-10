@@ -5,13 +5,12 @@ import { useState, useEffect } from 'react';
 // Step configuration with playful substep messages
 const STEPS = [
   {
-    label: "Parsing document",
+    label: "Pre-screening document",
     substeps: [
-      "Extracting text layers...",
-      "Mapping document structure...",
-      "Identifying clause boundaries...",
+      "Classifying document type...",
+      "Checking if it's a contract...",
     ],
-    duration: 3000,
+    duration: 2000,
   },
   {
     label: "Analyzing with Claude",
@@ -106,10 +105,11 @@ export default function AnalysisProgressModal({
     if (!isOpen) return;
     if (streamProgress > 0) {
       setProgress(Math.min(streamProgress, 100));
-      // Sync step animations to stream progress
-      if (streamProgress < 15) {
+      // Sync step animations to the two-stage pipeline:
+      // 0-10%: pre-screen (step 0), 10-60%: analysis (step 1), 60-85%: issues (step 2), 85+: recommendations (step 3)
+      if (streamProgress < 10) {
         if (currentStep > 0) return;
-      } else if (streamProgress < 50) {
+      } else if (streamProgress < 60) {
         if (!completedSteps.has(0)) {
           setCompletedSteps(s => new Set([...s, 0]));
           setCurrentStep(1);
